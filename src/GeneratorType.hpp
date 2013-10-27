@@ -15,10 +15,10 @@ namespace sprng{
 enum GeneratorType{
   LFG,
   LCG,
-  LCG64,
-  CMRG,
-  MLFG,
-  PMLCG
+  LCG64// ,
+  // CMRG,
+  // MLFG,
+  // PMLCG
 };
 
 //! Convert a GeneratorType to an int

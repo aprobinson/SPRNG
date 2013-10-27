@@ -53,7 +53,7 @@ int Primes64::init_prime_64()
 
 // Get the number of primes requested
 int Primes64::getprime_64( int need, 
-			   std::vector<unsigned int> prime_array,
+			   std::vector<unsigned int> &prime_array,
 			   int offset )
 {
   int num_prime;
@@ -149,8 +149,14 @@ int Primes64::getprime_64( unsigned int &prime, int offset )
   return return_val;
 }
 
+// Initialize the static boolean
+bool Primes64::prime_list_initialized = false;
+
+// Initialize the primes array
+int Primes64::primes[];
+
 // Initialize the full prime array
-unsigned int Primes64::prime_list_64[] = 
+const unsigned int Primes64::prime_list_64[] = 
 {
 3037000493U,
 3037000453U,

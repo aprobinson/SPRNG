@@ -55,6 +55,8 @@ public:
 
   //! Spawn new generators
   int spawn_rng( int nspawned, Sprng ***newgens );
+  int spawn_rng( int nspawned, 
+		  std::vector<boost::shared_ptr<Sprng> > &newgens );
 
   //! Return the generator seed
   int get_seed_rng();
@@ -63,12 +65,14 @@ public:
   int free_rng();
 
   //! Pack this generator into a character buffer
+  int pack_rng( char **buffer );
   int pack_rng( std::string &buffer );
 
   //! Print this generators info
   int print_rng();
 
   //! Unpack this generator from a character buffer
+  int unpack_rng( char *packed );
   int unpack_rng( std::string &packed );
   //@}
 

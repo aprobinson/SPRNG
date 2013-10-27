@@ -285,6 +285,22 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
   return nspawned;
 }
 
+int LCG::spawn_rng( int nspawned, 
+		    std::vector<boost::shared_ptr<Sprng> > &newgens )
+{
+  Sprng **temp_newgens;
+
+  // The number of generators spawned
+  int val = spawn_rng( nspawned, &temp_newgens );
+
+  newgens.resize( val );
+
+  for( int i = 0; i < val; ++i )
+    newgens[i].reset( temp_newgens[i] );
+  
+  return val;
+}
+
 // Return the generator seed
 int LCG::get_seed_rng()
 {
@@ -302,6 +318,17 @@ int LCG::free_rng()
 }
 
 // Pack this generator into a character buffer
+int LCG::pack_rng( char **buffer )
+{
+  std::string temp_buffer;
+  
+  int val = pack_rng( temp_buffer );
+
+  temp_buffer.copy( *buffer, temp_buffer.size() );
+
+  return val;
+}
+
 int LCG::pack_rng( std::string &buffer )
 {
   // Clear the buffer
@@ -341,7 +368,7 @@ int LCG::pack_rng( std::string &buffer )
   // Store the multiplier
   store_value( d_multiplier, partial_buffer );
   buffer += partial_buffer;
-  
+
   return buffer.size();
 }
 
@@ -358,6 +385,13 @@ int print_rng()
 }
 
 // Unpack this generator from a character buffer
+int unpack_rng( char *packed )
+{
+  std::string tmp_packed( packed );
+  
+  return unpack_rng( tmp_packed );
+}
+
 int unpack_rng( std::string &packed )
 {
   std::size_t nbytes, offset = 0;

@@ -220,7 +220,7 @@ int LCG64::spawn_rng( int nspawned, Sprng ***newgens )
     
     // Initialize a stream. The spawning info will be incorrect but it will be
     // corrected below.
-    genptr[i] = new LCG64;
+    genptr[i].reset( new LCG64 );
     genptr[i]->init_rng (gn, gn+1, s, d_parameter);
   
     if(genptr[i] == NULL)	/* Was generator initiallized? */
@@ -235,6 +235,20 @@ int LCG64::spawn_rng( int nspawned, Sprng ***newgens )
   *newgens = (Sprng **) genptr;
  
   return nspawned;
+}
+
+int LCG64::spawn_rng( int nspawned, 
+		      std::vector<boost::shared_ptr<Sprng> > &newgens )
+{
+  Sprng **temp_newgens;
+  int val = spawn_rng( nspawned, &temp_newgens );
+
+  newgens.resize( val );
+
+  for( int i = 0; i < val; ++i )
+    newgens[i].reset( temp_newgens[i] );
+
+  return val;
 }
 
 // Return the generator seed
@@ -253,6 +267,17 @@ int LCG64::free_rng()
 }
 
 // Pack this generator into a character buffer
+int LCG64::pack_rng( char **buffer )
+{
+  std::string temp_buffer;
+
+  int val = pack_rng( temp_buffer );
+
+  temp_buffer.copy( *buffer, temp_buffer.size() );
+
+  return val;
+}
+
 int LCG64::pack_rng( std::string &buffer )
 {
   // Clear the buffer
@@ -309,6 +334,13 @@ int LCG64::print_rng()
 }
 
 // Unpack this generator from a character buffer
+int LCG64::unpack_rng( char* packed )
+{
+  std::string tmp_packed( packed );
+  
+  return unpack_rng( tmp_packed );
+}
+
 int LCG64::unpack_rng( std::string &packed )
 {
   std::size_t nbytes, offset = 0;

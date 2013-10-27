@@ -14,6 +14,10 @@
 
 // Std Lib Includes
 #include <string>
+#include <vector>
+
+// Boost Includes
+#include <boost/shared_ptr.hpp>
 
 namespace sprng{
 
@@ -41,6 +45,8 @@ public:
 
   //! Spawn new generators
   virtual int spawn_rng( int nspawned, Sprng ***newgens ) = 0;
+  virtual int spawn_rng( int nspawned, 
+			 std::vector<boost::shared_ptr<Sprng> > &newgens ) = 0;
 
   //! Return the generator seed
   virtual int get_seed_rng() = 0;
@@ -49,13 +55,15 @@ public:
   virtual int free_rng() = 0;
 
   //! Pack this generator into a character buffer
+  virtual int pack_rng( char **buffer ) = 0
   virtual int pack_rng( std::string &buffer ) = 0;
 
   //! Print this generators info
   virtual int print_rng() = 0;
 
   //! Unpack this generator from a character buffer
-  virtual int unpack_rng( std::string &packed ) = 0;
+  virtual int unpack_rng( char *packed ) = 0;
+  virtual int unpack_rng( const std::string &packed ) = 0;
 };
 
 } // end namespace sprng

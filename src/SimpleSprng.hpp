@@ -34,9 +34,11 @@ struct SimpleSprng
 {
   
   //! Generator initialization
+  static int init_rng_simple( int seed, int mult, GeneratorType gtype = LCG );
   static int init_rng_simple( int seed, int mult, int gtype = 0 );
 
   //! Generator initialization with mpi
+  static int init_rng_simple_mpi( int seed, int mult, GeneratorType gtype = LCG );
   static int init_rng_simple_mpi( int seed, int mult, int gtype = 0 );
 
   //! Return a random int
@@ -58,10 +60,13 @@ struct SimpleSprng
   static int get_rn_dbl_simple_mpi();
 
   //! Pack a generator into a character buffer
+  static int pack_rng_simple( char **buffer );
   static int pack_rng_simple( std::string &buffer );
 
   //! Unpack a generator from a character buffer
-  static int unpack_rng_simple( std::string &packed, int gtype );
+  static int unpack_rng_simple( char *packed, int gtype );
+  static int unpack_rng_simple( const std::string &packed, 
+				const GeneratorType gtype );
   
   //! Print the generator info
   static int print_rng_simple();
@@ -73,9 +78,11 @@ private:
 };  
 
 //! Generator initialization
+int init_rng_simple( int seed, int mult, GeneratorType gtype = LCG );
 int init_rng_simple( int seed, int mult, int gtype = 0 );
 
 //! Generator initialization with mpi
+int init_rng_simple_mpi( int seed, int mult, GeneratorType gtype = LCG );
 int init_rng_simple_mpi( int seed, int mult, int gtype = 0 );
 
 //! Return a random int
@@ -97,10 +104,13 @@ int get_rn_dbl_simple();
 int get_rn_dbl_simple_mpi();
 
 //! Pack a generator into a character buffer
+int pack_rng_simple( char **buffer );
 int pack_rng_simple( std::string &buffer );
 
 //! Unpack a generator from a character buffer
-int unpack_rng_simple( std::string &packed, int gtype );
+int unpack_rng_simple( char *packed, int gtype );
+int unpack_rng_simple( const std::string &packed, 
+		       const GeneratorType gtype );
   
 //! Print the generator info
 int print_rng_simple();

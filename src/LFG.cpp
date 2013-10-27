@@ -159,7 +159,7 @@ int LFG::init_rng( int gn, int tg, int s, int m )
 {
   int doexit=0, i, k, length;
   LFG **p = NULL;
-  std::vector<unsigned> nstart, si_local;
+  boost::shared_array<unsigned> nstart, si_local;
 
   // Check if tg is valid
   if (tg <= 0) 
@@ -371,9 +371,9 @@ double LFG::get_rn_dbl()
 // Spawn new generators
 int LFG::spawn_rng( int nspawned, Sprng ***newgens )
 {
-  LFG **q = NULL;
+  LFG **q = NULL
   int i;
-  std::vector<unsigned> p;
+  boost::shared_array<unsigned> p;
   
   // Check if nspawned is valid
   if( nspawned <= 0 ) 
@@ -384,8 +384,8 @@ int LFG::spawn_rng( int nspawned, Sprng ***newgens )
   
   p = d_si;
   q = LFG::initialize(d_rng_type,nspawned,d_param,d_seed,p,d_init_seed);
-  
-  if( q == NULL ) 
+
+  if( q == NULL )
   {
     *newgens = NULL;
     return 0;
@@ -399,6 +399,22 @@ int LFG::spawn_rng( int nspawned, Sprng ***newgens )
   *newgens = (Sprng **) q;
 
   return nspawned;
+}
+
+int LFG::spawn_rng( int nspawned,
+		    std::vector<boost::shared_ptr<Sprng> &newgens )
+{
+  Sprng **temp_newgens;
+
+  // Then number of generators spawned
+  int val = spawn_rng( nspawned, &temp_newgens );
+
+  newgens.resize( val );
+
+  for( int i = 0; i < val; ++i )
+    newgens[i].reset( temp_newgens[i] );
+
+  return val;
 }
 
 // Return the generator seed
@@ -416,6 +432,17 @@ int LFG::free_rng()
 }
 
 // Pack this generator into a character buffer
+int LFG::pack_rng( char **buffer )
+{
+  std::string temp_buffer;
+  
+  int val = pack_rng( temp_buffer );
+  
+  temp_buffer.copy( *buffer, temp_buffer.size() );
+
+  return val;
+}
+
 int LFG::pack_rng( std::string &buffer )
 {
   // Clear the buffer
@@ -449,15 +476,15 @@ int LFG::pack_rng( std::string &buffer )
   buffer += partial_buffer;
   
   // Store the next branch seeds
-  store_array( d_si, partial_buffer );
+  store_array( d_si, d_lval-1, partial_buffer );
   buffer += partial_buffer;
 
   // Store the even generator
-  store_array( d_r0, partial_buffer );
+  store_array( d_r0, d_lval, partial_buffer );
   buffer += partial_buffer;
   
   // Store the odd generator
-  store_array( d_r1, partial_buffer );
+  store_array( d_r1, d_lval, partial_buffer );
   buffer += partial_buffer;
   
   // Store the integer point into fill
@@ -480,6 +507,13 @@ int LFG::print_rng()
 }
 
 // Unpack this generator from a character buffer
+int unpack_rng( char *packed )
+{
+  std::string tmp_packed( packed );
+  
+  return unpack_rng( tmp_packed );
+}
+
 int unpack_rng( std::string &packed )
 {
   int doexit=0, i, found, length, k;
@@ -612,9 +646,9 @@ int LFG::bitcnt( int x )
  * (64,4,3,1,0). Each call steps the register 64 times. Two words are used
  * to represent the register and to allow for an integer size of 32 bits.
  */
-int advance_reg( std::vector<int> &reg_fill )
+int advance_reg( boost::shared_array<int> &reg_fill )
 {
-  assert( reg_fill.size() == 2 );
+  assert( reg_fill );
   
   const int mask = 0x1b;
   int adv_64[4][2];
@@ -659,16 +693,16 @@ int advance_reg( std::vector<int> &reg_fill )
  * global seed. Fill the shift register with two copies of this number except
  * when its equal to zero.
  */
-int get_fill( std::vector<unsigned> &n, 
-	      std::vector<unsigned> &r, 
+int get_fill( boost::shared_array<unsigned> &n, 
+	      boost::shared_array<unsigned> &r, 
 	      int param_local, 
 	      unsigned seed_local )
 {
-  assert( n.size() == LFG::valid[param_local].L-1 );
-  assert( r.size() == LFG::valid[param_local].L );
+  assert( n );
+  assert( r );
   
   int i,j,k, length;
-  std::vector<int> temp( 2 );
+  boost::shared_array<int> temp( 2 );
 
   length = LFG::valid[param_local].L;
   
@@ -705,12 +739,12 @@ int get_fill( std::vector<unsigned> &n,
 }
 
 // Update index for next spawning
-void si_double( std::vector<unsigned> &a, 
-		std::vector<unsigned> &b, 
+void si_double( boost::shared_array<unsigned> &a, 
+		boost::shared_array<unsigned> &b, 
 		int length )
 {
-  assert( a.size() >= length-1 );
-  assert( b.size() >= length-1 );
+  assert( a );
+  assert( b );
   
   int i;
 
@@ -733,38 +767,42 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
 		       int ngen_local,
 		       int param_local,
 		       int seed_local,
-		       std::vector<unsigned> &nstart_local,
+		       boost::shared_array<unsigned> &nstart_local,
 		       unsigned initseed_local )
 {
-  assert( nstart_local.size() == LFG::valid[param_local].L-1 );
+  assert( nstart_local );
   
   int i,j,k,l;
   int length = LFG::valid[param_local].L;
-  std::vector<int> order( ngen_local ), nindex;
+  boost::shared_array<int> order( new int[ngen_local] ), nindex;
   LFG **q;
 
   // Allocate memory for the fill of each generator
   q = new LFG *[ngen_local];
 
-  if( q == NULL ) 
+  if( q == NULL )
     return NULL;
 
   for( i=0; i<ngen_local; i++ ) 
   {
     q[i] = new LFG;
-
-    if( q[i] == NULL ) 
+    
+    if( q[i] == NULL )
       return NULL;
-
+    
     // Initialize generator member data
     q[i]->d_rng_type = d_rng_type_local;
     q[i]->d_hptr = length - 1;
-    q[i]->d_si.resize( length-1 );
-    q[i]->d_r0.resize( length );
-    q[i]->d_r1.resize( length );
+    q[i]->d_si.reset( new unsigned[length-1] );
+    q[i]->d_r0.reset( new unsigned[length] );
+    q[i]->d_r1.reset( new unsigned[length] );
+
+    if( q[i]->d_si == NULL || q[i]->d_r0 == NULL || q[i]->d_r1 == NULL )
+      return NULL;
+    
     q[i]->d_lval = length;
     q[i]->d_kval = LFG::valid[param_local].K;
-    q[i]->d_param = d_param_local;
+    q[i]->d_param = param_local;
     q[i]->d_seed = d_seed_local;
     q[i]->d_init_seed = d_initseed_local;
     q[i]->d_gentype = GENTYPE;
@@ -815,14 +853,14 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
     }
   }
 
-  order.clear();
+  order.reset();
 
   for( i=ngen_local-1; i>=0; i-- ) 
   {
     k = 0;
     
     for( j=1; j<lv-1; j++ )
-      if( q[i]->si[j] ) 
+      if( q[i]->d_si[j] ) 
 	k = 1;
     if( !k ) 
       break;

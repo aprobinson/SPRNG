@@ -36,27 +36,25 @@ public:
 
 private:
 
-  // Prime array sizes
-  static int n_primes = 1000;
-  static int full_prime_list_size = 1778;
-  static int sub_prime_list_size = 1000;
-  static int step = 1000;
-
   // sqrt(2)*2^23 + 2
-  static int max_prime = 11863285; 
+  static const int max_prime = 11863285; 
   // sqrt(max_prime)
-  static int min_prime = 3444;
+  static const int min_prime = 3444;
   // Total number of available primes
-  static int max_prime_offset = 779156;
-  
-  // Has the primes array been initialized?
-  static bool prime_list_initialized = false;
-
-  // Prime array (once initialized, prime_list_initialized will be set to true)
-  static int primes[n_primes];
+  static const int max_prime_offset = 779156;
 
   // Full prime array
-  static int prime_list_32[full_prime_list_size];
+  static const int full_prime_list_size = 1778;
+  static const int prime_list_32[1778];
+  
+  // Has the primes array been initialized?
+  static bool prime_list_initialized;
+
+  // Prime array (once initialized, prime_list_initialized will be set to true)
+  static const int n_primes = 1000;
+  static const int sub_prime_list_size = 1000;
+  static const int step = 1000;
+  static int primes[1000];
 };
 
 } // end namespace sprng

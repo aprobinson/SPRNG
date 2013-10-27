@@ -20,10 +20,16 @@ namespace sprng{
 inline int init_rng_simple( int seed, int mult, int gtype )
 { return SimpleSprng::init_rng_simple( seed, mult, gtype ); }
 
+inline int init_rng_simple( int seed, int mult, GeneratorType gtype )
+{ return SimpleSprng::init_rng_simple( seed, mult, gtype ); }
+
 // Generator initialization with mpi
 /*! \ingroup simple_sprng_interface
  */
 inline int init_rng_simple_mpi( int seed, int mult, int gtype )
+{ return SimpleSprng::init_rng_simple_mpi( seed, mult, gtype ); }
+
+inline int init_rng_simple_mpi( int seed, int mult, GeneratorType gtype )
 { return SimpleSprng::init_rng_simple_mpi( seed, mult, gtype ); }
 
 // Return a random int
@@ -65,13 +71,20 @@ inline int get_rn_dbl_simple_mpi()
 // Pack a generator into a character buffer
 /*! \ingroup simple_sprng_interface
  */
+inline int pack_rng_simple( char **buffer )
+{ return SimpleSprng::pack_rng_simple( buffer ); }
+
 inline int pack_rng_simple( std::string &buffer )
 { return SimpleSprng::pack_rng_simple( buffer ); }
 
 // Unpack a generator from a character buffer
 /*! \ingroup simple_sprng_interface
  */
-inline int unpack_rng_simple( std::string &packed, int gtype )
+inline int unpack_rng_simple( char* packed, in gtype )
+{ return SimpleSprng::unpack_rng_simple( packed, gtype ); }
+
+inline int unpack_rng_simple( const std::string &packed,  
+			       const GeneratorType gtype )
 { return SimpleSprng::unpack_rng_simple( packed, gtype ); }
   
 // Print the generator info

@@ -25,22 +25,22 @@ int Primes32::init_prime_32()
   int i, j, obtained = 0;
   bool isprime;
   
-  for(i=3; i < Primes32::min_prime; i += 2)
+  for( i=3; i < Primes32::min_prime; i += 2 ) 
   {
     isprime = true;
     
-    for(j=0; j < obtained; j++)
-      if(i%primes[j] == 0)
+    for( j=0; j < obtained; j++ )
+      if( i%Primes32::primes[j] == 0 )
       {
 	isprime = false;
 	break;
       }
-    else if(primes[j]*primes[j] > i)
-      break;
+      else if( Primes32::primes[j]*Primes32::primes[j] > i )
+	break;
 
-    if(isprime)
+    if( isprime )
     {
-      primes[obtained] = i;
+      Primes32::primes[obtained] = i;
       obtained++;
     }
   }
@@ -52,7 +52,7 @@ int Primes32::init_prime_32()
 }
 
 // Get the number of primes requested
-int Prime32::getprime_32( int need,
+int Primes32::getprime_32( int need,
 			  std::vector<unsigned int> &prime_array,
 			  int offset )
 {
@@ -78,7 +78,7 @@ int Prime32::getprime_32( int need,
   }
   
 
-  if(offset+need-1<Primes32::sub_prime_list_size) 
+  if( offset+need-1 < Primes32::sub_prime_list_size ) 
   {
     for( i = 0; i < need; ++i )
       prime_array[i] = Primes32::prime_list_32[offset+i];
@@ -86,21 +86,21 @@ int Prime32::getprime_32( int need,
     return need;
   }
 
-  if(!Primes32::prime_list_initializedx)
+  if( !Primes32::prime_list_initialized )
   {
     num_prime = init_prime_32();
     
     largest = Primes32::max_prime;
   }
   
-  if(offset > Primes32::max_prime_offset)
+  if( offset > Primes32::max_prime_offset )
   {
     fprintf(stderr,"WARNING: generator has branched maximum number of times;\nindependence of generators no longer guaranteed");
-    offset = offset % MAXPRIMEOFFSET;
+    offset = offset % Primes32::max_prime_offset;
   }
   
   // Search table for previous prime
-  if(offset < Primes32::sub_prime_list_size)	
+  if( offset < Primes32::sub_prime_list_size )	
   {
     largest = prime_list_32[offset] + 2;
     offset = 0;
@@ -112,25 +112,24 @@ int Prime32::getprime_32( int need,
     offset -= (index-Primes32::sub_prime_list_size+1)*Primes32::step + Primes32::sub_prime_list_size - 1;
   }
   
-  
-  while(need > obtained && largest > Primes32::min_prime)
+  while( need > obtained && largest > Primes32::min_prime )
   {
     isprime = true;
     largest -= 2;
     for(i=0; i<num_prime; i++)
-      if(largest%primes[i] == 0)
+      if( largest%primes[i] == 0 )
       {
 	isprime = false;
 	break;
       }
     
-    if(isprime && offset > 0)
+    if( isprime && offset > 0 )
       offset--;
-    else if(isprime)
+    else if( isprime )
       prime_array[obtained++] = largest;
   }
   
-  if(need > obtained)
+  if( need > obtained )
     fprintf(stderr,"ERROR: Insufficient number of primes: needed %d, obtained %d\n", need, obtained);
   
   return obtained;
@@ -149,8 +148,14 @@ int Primes32::getprime_32( unsigned int &prime, int offset )
   return return_val;
 }
 
+// Initialize the static boolean
+bool Primes32::prime_list_initialized = false;
+
+// Initialize the primes array
+int Primes32::primes[];
+
 // Initialize the full prime array
-int Primes32::prime_list_32[] = 
+const int Primes32::prime_list_32[] = 
 {
 11863279,
 11863259,

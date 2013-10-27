@@ -98,6 +98,8 @@ public:
 
   //! Spawn new generators
   int spawn_rng( int nspawned, Sprng ***newgens );
+  void spawn_rng( int nspawned,
+		  std::vector<boost::shared_ptr<Sprng> &newgens );
 
   //! Return the generator seed
   int get_seed_rng();
@@ -129,17 +131,17 @@ private:
   static int bitcnt( int x );
 
   //! Advance the registers
-  static int advance_reg( std::vector<int> &reg_fill );
+  static int advance_reg( boost::shared_array<int> &reg_fill );
 
   //! Get the register fill
-  static int get_fill( std::vector<unsigned> &n,
-		       std::vector<unsigned> &r,
+  static int get_fill( boost::shared_array<unsigned> &n,
+		       boost::shared_array<unsigned> &r,
 		       int param_local,
 		       unsigned seed_local );
 
   //! Update index for next spawning
-  static void si_double( std::vector<unsigned> &a, 
-			 std::vector<unsigned> &b, 
+  static void si_double( boost::shared_array<unsigned> &a, 
+			 boost::shared_array<unsigned> &b, 
 			 int length );
   
   //! Initialize the streams
@@ -147,7 +149,7 @@ private:
 			   int ngen_local,
 			   int param_local,
 			   int seed_local,
-			   std::vector<unsigned> &nstart_local,
+			   boost::shared_array<unsigned> &nstart_local,
 			   unsigned initseed_local );
 
   //! Max number of LFG streams possible
@@ -175,13 +177,13 @@ private:
   std::string d_gentype;
   
   // Sets the next branch seed
-  std::vector<unsigned> d_si;
+  boost::shared_array<unsigned> d_si;
 
   // Even generator
-  std::vector<unsigned> d_r0;
+  boost::shared_array<unsigned> d_r0;
 
   // Odd generator
-  std::vector<unsigned> d_r1;
+  boost::shared_array<unsigned> d_r1;
 
   // Stream number of this generator
   int d_stream_number;

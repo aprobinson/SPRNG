@@ -28,13 +28,20 @@ namespace sprng{
 // Generator initialization
 int SimpleSprng::init_rng_simple( int seed, int mult, int gtype )
 {
+  return SimpleSprng::init_rng_simple( seed, 
+				       mult, 
+				       intToGeneratorType( gtype ) );
+}
+
+int SimpleSprng::init_rng_simple( int seed, int mult, GeneratorType gtype )
+{
   int myid=0, nprocs=1;
   int val;
   Sprng * temp;
-
+  
   SprngFactory generator_factory( gtype );
   temp = generator_factory.create();
-
+  
   val = temp->init_rng(myid,nprocs,seed,mult);
 
   if( val != 0 )
@@ -46,18 +53,26 @@ int SimpleSprng::init_rng_simple( int seed, int mult, int gtype )
 // Generator initialization with mpi
 int SimpleSprng::init_rng_simple_mpi( int seed, int mult, int gtype )
 {
+  return SimpleSprng::init_rng_simple_mpi( seed,
+					   mult,
+					   intToGeneratorType( gtype ) );
+}
+
+int SimpleSprng::init_rng_simple_mpi( int seed, int mult, GeneratorType gtype)
+{
   int myid=0, nprocs=1;
+  int val;
   Sprng *temp;
-  
-  get_proc_info_mpi(&myid,&nprocs);
+
+  get_proc_inf_mpi(&myid,&nprocs);
 
   SprngFactory generator_factory( gtype );
   temp = generator_factory.create();
 
-  temp->init_rng(myid,nprocs,seed,mult);
+  val = temp->init_rng(myid,nprocs,seed,mult);
 
   if( val != 0 )
-    SimpleSprng::default_generator.reset( temp );
+    SimpleSprng::default_generator.reset( tmp );
 
   return val;
 }
@@ -125,16 +140,39 @@ int SimpleSprng::get_rn_dbl_simple_mpi()
 }
 
 // Pack a generator into a character buffer
+int SimpleSprng::pack_rng_simple( char **buffer )
+{
+  std::string temp_buffer;
+  int val;
+  
+  val = SimpleSprng::default_generator->pack_rng( temp_buffer );
+
+  temp_buffer.copy( *buffer, temp_buffer.size() );
+
+  return val;
+}
+
 int SimpleSprng::pack_rng_simple( std::string &buffer )
 {
-  if(!SimpleSpring::default_generator)
+  if(!SimpleSprng::default_generator)
     return 0;
   
-  return SimpleSpring::default_generator->pack_rng(buffer);
+  return SimpleSpring::default_generator->pack_rng( buffer );
 }
 
 // Unpack a generator from a character buffer
-  int SimpleSprng::unpack_rng_simple( std::string &packed, int gtype )
+int SimpleSprng::unpack_rng_simple( char *packed,
+				    int gtype )
+{
+  std::string temp_packed( packed );
+  
+  return SimpleSprng::unpack_rng_simple( packed,
+					 intToGeneratorType( gtype ) );
+  
+}
+
+int SimpleSprng::unpack_rng_simple( const std::string &packed, 
+				    const GeneratorType gtype )
 {
   Sprng * temp;
   int val;
@@ -142,7 +180,7 @@ int SimpleSprng::pack_rng_simple( std::string &buffer )
   SprngFactory generator_factory( gtype );
   temp = generator_factory.create();
   
-  val = temp->unpack_rng(packed);
+  val = temp->unpack_rng( packed );
   
   if( val != 0 )
     SimpleSprng::default_generator.reset( temp );

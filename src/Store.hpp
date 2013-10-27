@@ -17,23 +17,38 @@
 #include <string>
 #include <vector>
 
+// Boost Includes
+#include <boost/shared_array.hpp>
+
 namespace sprng{
 
-// Store an integer value in a character buffer
+//! Store an integer value in a character buffer
 template<typename OrdinalType>
 void store_value( const OrdinalType l, std::string &c );
 
-// Store an array of integer values in a character buffer
+//! Store an array of integer values in a character buffer
 template<typename OrdinalType>
 void store_array( const std::vector<OrdinalType> &l, std::string &c );
 
-// Load an integer value from a character buffer
+//! Store an array of integer values in a character buffer
+template<typename OrdinalType>
+void store_array( const boost::shared_array<OrdinalType> &l, 
+		  const int size,
+		  std::string &c );
+
+//! Load an integer value from a character buffer
 template<typename OrdinalType>
 void load_value( const std::string &c, OrdinalType &l );
 
-// Load an array of integer values from a character buffer
+//! Load an array of integer values from a character buffer
 template<typename OrdinalType>
 void load_array( const std::string &c, int n, std::vector<OrdinalType> &l );
+
+//! Load an array of integer values from a character buffer
+template<typename OrdinalType>
+void load_array( const std::string &c, 
+		 int n, 
+		 boost::shared_array<OrdinalType> &l );
 
 } // end namespace sprng
 

@@ -1,0 +1,8 @@
+#!/bin/bash
+##---------------------------------------------------------------------------##
+## CONFIGURE SPRNG with CMAKE
+##---------------------------------------------------------------------------##
+
+EXTRA_ARGS=$@
+SPRNG_PATH=$HOME/research/rng/SPRNG/
+PREFIX_PATH=$HOME/research/rng/

@@ -15,6 +15,9 @@
 // Std Lib Includes
 #include <ctime>
 
+// SPRNG Includes
+#include "SPRNG_mpi_config.hpp"
+
 // MPI Includes
 #ifdef HAVE_SPRNG_MPI
 #include <mpi.h>

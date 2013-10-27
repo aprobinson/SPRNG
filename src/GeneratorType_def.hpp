@@ -22,9 +22,9 @@ int generatorTypeToInt( const GeneratorType gtype )
   case LFG: return 0;
   case LCG: return 1;
   case LCG64: return 2;
-  case CMRG: return 3;
-  case MLFG: return 4;
-  case PMLCG: return 5;
+  // case CMRG: return 3;
+  // case MLFG: return 4;
+  // case PMLCG: return 5;
   }
 }
 
@@ -38,9 +38,9 @@ GeneratorType intToGeneratorType( const int gtype )
   case 0: return LFG;
   case 1: return LCG;
   case 2: return LCG64;
-  case 3: return CMRG;
-  case 4: return MLFG;
-  case 5: return PMLCG;
+  // case 3: return CMRG;
+  // case 4: return MLFG;
+  // case 5: return PMLCG;
   }
 }
 

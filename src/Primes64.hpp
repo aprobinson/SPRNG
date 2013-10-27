@@ -28,7 +28,7 @@ public:
   
   //! Get the number of primes requested
   static int getprime_64( int need, 
-			  std::vector<unsigned int> prime_array,
+			  std::vector<unsigned int> &prime_array,
 			  int offset );
 
   //! Get a single prime
@@ -36,27 +36,25 @@ public:
 
 private:
 
-  // Prime array sizes
-  static int n_primes = 10000;
-  static int full_prime_list_size = 15613;
-  static int sub_prime_list_size = 1000;
-  static int step = 10000;
-
   // Largest odd # < sqrt(2)*2^31+2 
-  static unsigned int max_prime = 3037000501U; 
+  static const unsigned int max_prime = 3037000501U; 
   // sqrt(max_prime)
-  static unsigned int min_prime = 55108U;
+  static const unsigned int min_prime = 55108U;
   // Total number of available primes
-  static unsigned int max_prime_offset = 146138719U;
-  
-  // Has the primes array been initialized?
-  static bool prime_list_initialized = false;
-
-  // Prime array (once initialized, prime_list_initialized will be set to true)
-  static int primes[n_primes];
+  static const unsigned int max_prime_offset = 146138719U;
 
   // Full prime array
-  static unsigned int prime_list_64[full_prime_list_size];
+  static const int full_prime_list_size = 15613;
+  static const unsigned int prime_list_64[15613];
+  
+  // Has the primes array been initialized?
+  static bool prime_list_initialized;
+
+  // Prime array (once initialized, prime_list_initialized will be set to true)
+  static const int n_primes = 10000;
+  static const int sub_prime_list_size = 1000;
+  static const int step = 10000;
+  static int primes[10000];
 };
 
 } // end namespace sprng

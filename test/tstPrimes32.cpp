@@ -22,7 +22,7 @@
 // Check that a prime value can be retrieved.
 BOOST_AUTO_TEST_CASE( getprime_32 )
 {
-  unsigned int prime1, prime5, prime10; 
+  int prime1, prime5, prime10; 
   int obtained1, obtained5, obtained10;
 
   obtained1 = sprng::Primes32::getprime_32( prime1, 0 );

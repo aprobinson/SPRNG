@@ -15,6 +15,7 @@
 // Std Lib Includes
 #include <string>
 #include <vector>
+#include <iostream>
 
 // Boost Includes
 #include <boost/shared_ptr.hpp>

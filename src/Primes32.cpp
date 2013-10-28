@@ -53,7 +53,7 @@ int Primes32::init_prime_32()
 
 // Get the number of primes requested
 int Primes32::getprime_32( int need,
-			  std::vector<unsigned int> &prime_array,
+			  std::vector<int> &prime_array,
 			  int offset )
 {
   int num_prime;
@@ -136,9 +136,9 @@ int Primes32::getprime_32( int need,
 }
 
 // Get a single prime
-int Primes32::getprime_32( unsigned int &prime, int offset )
+int Primes32::getprime_32( int &prime, int offset )
 {
-  std::vector<unsigned int> tmp_vec;
+  std::vector<int> tmp_vec;
   int return_val;
 
   return_val = Primes32::getprime_32( 1, tmp_vec, offset );

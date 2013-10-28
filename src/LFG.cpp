@@ -53,11 +53,7 @@
 //---------------------------------------------------------------------------//
 
 // Std Lib Includes
-#include <vector>
-#include <iostream>
-#include <algorithm>
 #include <assert.h>
-#include <string.h>
 
 // Boost Includes
 #include <boost/scoped_ptr.hpp>
@@ -178,7 +174,8 @@ int LFG::init_rng( int gn, int tg, int s, int m )
   // Check if gn is in range
   if( gn < 0 || gn >= tg ) 
   {
-    std::cerr << "ERROR - init_rng: gennum out of range." << std::endl;
+    std::cerr << "ERROR - init_rng: gennum " << gn << " out of range "
+	      << "(0," << tg << ")" << std::endl;
     return 0;
   }
 
@@ -954,7 +951,7 @@ void LFG::increment_number_of_streams( int num )
 {
   LFG::num_generators += num;
   
-  if( num_generators >= LFG::max_streams )
+  if( LFG::num_generators >= LFG::max_streams )
     std::cerr << "WARNING: " << LFG::num_generators << " open LFG streams. "
 	      << "Independence can only be guaranteed with " 
 	      << LFG::max_streams << " LFG streams."

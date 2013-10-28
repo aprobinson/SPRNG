@@ -1,8 +1,8 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file   tstLFG.cpp
+//! \file   tstLCG.cpp
 //! \author Alex Robinson
-//! \brief  Unit tests for LFG class
+//! \brief  Unit tests for LCG class
 //!
 //---------------------------------------------------------------------------//
 
@@ -15,21 +15,21 @@
 #include <boost/test/included/unit_test.hpp>
 
 // SPRNG Includes
-#include "LFG.hpp"
+#include "LCG.hpp"
 
 //---------------------------------------------------------------------------//
 // Tests.
 //---------------------------------------------------------------------------//
-// Check that a single LFG can be initialized
+// Check that the LCG can be initialized
 BOOST_AUTO_TEST_CASE( init_rng )
 {
   int return_value;
-  sprng::LFG generator;
-  
-  return_value = generator.init_rng( 0, 1, 1, 0 );
+  sprng::LCG generator;
 
+  return_value = generator.init_rng( 0, 1, 1, 0 );
+  
   BOOST_CHECK_EQUAL( return_value, 1 );
-  BOOST_CHECK_EQUAL( sprng::LFG::get_number_of_streams(), 1 );
+  BOOST_CHECK_EQUAL( sprng::LCG::get_number_of_streams(), 1 );
 }
 
 //---------------------------------------------------------------------------//
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE( init_rng )
 BOOST_AUTO_TEST_CASE( get_rn_int )
 {
   int random_int;
-  sprng::LFG generator;
+  sprng::LCG generator;
 
   generator.init_rng( 0, 1, 1, 0 );
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE( get_rn_int )
 BOOST_AUTO_TEST_CASE( get_rn_flt )
 {
   float random_flt;
-  sprng::LFG generator;
+  sprng::LCG generator;
 
   generator.init_rng( 0, 1, 1, 0 );
 
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE( get_rn_flt )
 // Check that a random double can be created
 BOOST_AUTO_TEST_CASE( get_rn_dbl )
 {
-  float random_dbl;
-  sprng::LFG generator;
+  double random_dbl;
+  sprng::LCG generator;
 
   generator.init_rng( 0, 1, 1, 0 );
 
@@ -78,64 +78,50 @@ BOOST_AUTO_TEST_CASE( get_rn_dbl )
 }
 
 //---------------------------------------------------------------------------//
-// Check that the generator seed can be obtained
-BOOST_AUTO_TEST_CASE( get_seed_rng )
-{
-  int generator_seed;
-  sprng::LFG generator;
-
-  generator.init_rng( 0, 1, 1, 0 );
-
-  generator_seed = generator.get_seed_rng();
-    
-  BOOST_CHECK_EQUAL( generator_seed, 1 );
-}
-
-//---------------------------------------------------------------------------//
 // Check that the number of generator streams can be decremented
 BOOST_AUTO_TEST_CASE( free_rng )
 {
-  boost::shared_ptr<sprng::LFG> generator1( new sprng::LFG ), 
-    generator2( new sprng::LFG );
+  boost::shared_ptr<sprng::LCG> generator1( new sprng::LCG ),
+    generator2( new sprng::LCG );
 
   generator1->init_rng( 0, 2, 1, 0 );
   generator2->init_rng( 1, 2, 1, 0 );
 
-  BOOST_REQUIRE_EQUAL( sprng::LFG::get_number_of_streams(), 2 );
+  BOOST_REQUIRE_EQUAL( sprng::LCG::get_number_of_streams(), 2 );
 
   generator1.reset();
   
-  BOOST_REQUIRE_EQUAL( sprng::LFG::get_number_of_streams(), 1 );
+  BOOST_REQUIRE_EQUAL( sprng::LCG::get_number_of_streams(), 1 );
 
   generator2.reset();
 
-  BOOST_REQUIRE_EQUAL( sprng::LFG::get_number_of_streams(), 0 );
+  BOOST_REQUIRE_EQUAL( sprng::LCG::get_number_of_streams(), 0 );
 }
 
 //---------------------------------------------------------------------------//
 // Check that the generator can be printed
 BOOST_AUTO_TEST_CASE( print )
 {
-  sprng::LFG generator;
+  sprng::LCG generator;
   generator.init_rng( 0, 1, 1, 0 );
-  
+
   std::stringstream ss;
-  
+
   ss << generator << std::endl;
-  
+
   std::cout << std::endl << "PRINT TEST:" << std::endl;
   generator.print_rng();
   std::cout << "PRINT TEST FINISHED" << std::endl;
 }
 
 //---------------------------------------------------------------------------//
-// Check that a generator can be packed into a character buffer and unpacked
+// Check that a generator chan be packed into a character buffer and unpacked
 BOOST_AUTO_TEST_CASE( pack_unpack_rng_char )
 {
-  boost::shared_ptr<sprng::LFG> generator1( new sprng::LFG ),
-    generator2( new sprng::LFG );
+  boost::shared_ptr<sprng::LCG> generator1( new sprng::LCG ),
+    generator2( new sprng::LCG );
   char *buffer1, *buffer2;
-  
+
   generator1->init_rng( 0, 2, 1, 0 );
   generator2->init_rng( 1, 2, 1, 0 );
   
@@ -156,8 +142,8 @@ BOOST_AUTO_TEST_CASE( pack_unpack_rng_char )
   ss.str("");
 
   // Free the original generator
-  generator1.reset( new sprng::LFG );
-  generator2.reset( new sprng::LFG );
+  generator1.reset( new sprng::LCG );
+  generator2.reset( new sprng::LCG );
 
   // Unpack the original generators
   generator1->unpack_rng( buffer1 );
@@ -178,16 +164,17 @@ BOOST_AUTO_TEST_CASE( pack_unpack_rng_char )
   ss.str("");
 
   // Check that the states match
-  BOOST_CHECK_EQUAL( sprng::LFG::get_number_of_streams(), 2 );
+  BOOST_CHECK_EQUAL( sprng::LCG::get_number_of_streams(), 2 );
   BOOST_CHECK_EQUAL( generator1_orig_state, generator1_unpacked_state );
   BOOST_CHECK_EQUAL( generator2_orig_state, generator2_unpacked_state );
 }
+
 //---------------------------------------------------------------------------//
-//  Check that a generator can be packed into a string buffer and unpacked
+// Check that a generator can be packed into a string buffer and unpacked
 BOOST_AUTO_TEST_CASE( pack_unpack_rng_string )
 {
-  boost::shared_ptr<sprng::LFG> generator1( new sprng::LFG ),
-    generator2( new sprng::LFG );
+  boost::shared_ptr<sprng::LCG> generator1( new sprng::LCG ),
+    generator2( new sprng::LCG );
   std::string buffer1, buffer2;
   
   generator1->init_rng( 0, 2, 1, 0 );
@@ -210,8 +197,8 @@ BOOST_AUTO_TEST_CASE( pack_unpack_rng_string )
   ss.str("");
 
   // Free the original generator
-  generator1.reset( new sprng::LFG );
-  generator2.reset( new sprng::LFG );
+  generator1.reset( new sprng::LCG );
+  generator2.reset( new sprng::LCG );
 
   // Unpack the original generators
   generator1->unpack_rng( buffer1 );
@@ -229,7 +216,7 @@ BOOST_AUTO_TEST_CASE( pack_unpack_rng_string )
   ss.str("");
 
   // Check that the states match
-  BOOST_CHECK_EQUAL( sprng::LFG::get_number_of_streams(), 2 );
+  BOOST_CHECK_EQUAL( sprng::LCG::get_number_of_streams(), 2 );
   BOOST_CHECK_EQUAL( generator1_orig_state, generator1_unpacked_state );
   BOOST_CHECK_EQUAL( generator2_orig_state, generator2_unpacked_state );
 }
@@ -239,16 +226,17 @@ BOOST_AUTO_TEST_CASE( pack_unpack_rng_string )
 BOOST_AUTO_TEST_CASE( spawn_rng )
 {
   int num_generators_spawned;
-  sprng::LFG generator;
+  sprng::LCG generator;
+    
   std::vector<boost::shared_ptr<sprng::Sprng> > new_generators;
   
   generator.init_rng( 0, 1, 1, 0 );
   num_generators_spawned = generator.spawn_rng( 10, new_generators );
 
   BOOST_CHECK_EQUAL( num_generators_spawned, 10 );
-  BOOST_CHECK_EQUAL( sprng::LFG::get_number_of_streams(), 11 );
+  BOOST_CHECK_EQUAL( sprng::LCG::get_number_of_streams(), 11 );
 }
 
 //---------------------------------------------------------------------------//
-// end tstLFG.cpp
+// end tstLCG.cpp
 //---------------------------------------------------------------------------//

@@ -10,10 +10,6 @@
 //---------------------------------------------------------------------------//
 
 // Std Lib Includes
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <assert.h>
 
 // SPRNG Includes
@@ -32,23 +28,21 @@ using namespace std;
 namespace sprng{
 
 // Initialize static member data
-// Initialize the max streams static member
 const int LCG::max_streams = 1<<19;
-
-// Initialize the mults static member array
+int LCG::num_generators = 0;
 const unsigned long long LCG::mults[] = {
-0x2875a2e7b175LL
-0x5deece66dLL
-0x3eac44605265LL
-0x1ee1429cc9f5LL
-0x275b38eb4bbdLL
-0x739a9cb08605LL
-0x3228d7cc25f5LL
+  0x2875a2e7b175LL,
+  0x5deece66dLL,
+  0x3eac44605265LL,
+  0x1ee1429cc9f5LL,
+  0x275b38eb4bbdLL,
+  0x739a9cb08605LL,
+  0x3228d7cc25f5LL,
 };
 
 // Default constructor
 LCG::LCG()
-  : d_rng_type( LCG ),
+  : d_rng_type( LCG_TYPE ),
     d_seed( 0 ),
     d_init_seed( 0 ),
     d_prime( 0 ),
@@ -110,19 +104,16 @@ int LCG::init_rng( int gn, int tg, int s, int m )
   // Check if total_gen (tn) is valid 
   if (tg <= 0) 
   {
+    std::cerr << "WARNING - init_rng: total_gen <= 0. "
+	      << "Default value of 1 used for total_gen."
+	      << std::endl;
     tg = 1;
-    fprint(stderr,"WARNING - init_rng: Total_gen <= 0. Default value of 1 used for total_gen\n");
   }
-
-  // Check if gen_num (gn) is valid
-  if (gn >= LCG::max_streams) 
-    fprint(stderr,"WARNING - init_rng: gennum: %d > maximum number of independent streams: %d\n\tIndependence of streams cannot be guranteed.\n",
-	    gn, MAX_STREAMS); 
 
   if (gn < 0 || gn >= tg) 
   {
-    fprint(stderr,"ERROR - init_rng: gennum %d out of range (0,%d)\n",
-	   gn, tg);
+    std::cerr << "ERROR - init_rng: gennum " << gn << " out of range "
+	      << "[0," << tg << ")" << std::endl;
     return 0;
   }
 
@@ -132,7 +123,8 @@ int LCG::init_rng( int gn, int tg, int s, int m )
   // Check if multiplier index (m) is valid
   if (m < 0 || m >= 7) 
   {
-    fprint(stderr,"WARNING - init_rng: multipler %d not valid. Using default param.\n", m );
+    std::cerr << "WARNING - init_rng: multiplier " << m << " not valid. "
+	      << "Using default parameter (m=0)" << std::endl;
     m = 0;
   }
 
@@ -141,7 +133,7 @@ int LCG::init_rng( int gn, int tg, int s, int m )
     d_multiplier = LCG::mults[m];
 
   // Set the generator type
-  d_rng_type = LCG;
+  d_rng_type = LCG_TYPE;
   
   // Set the generator type description
   d_gentype = GENTYPE;
@@ -150,7 +142,7 @@ int LCG::init_rng( int gn, int tg, int s, int m )
   d_init_seed = s;
 
   // Set the prime that this generator will use
-  Primes32::getprime_32( d_prime, gn);
+  Primes32::getprime_32( d_prime, gn );
 
   // Set the prime position
   d_prime_position = gn;
@@ -175,7 +167,7 @@ int LCG::init_rng( int gn, int tg, int s, int m )
     get_rn_dbl();
 
   // Increment the number of LCG streams being used
-  LCG::num_generators++;
+  LCG::increment_number_of_streams();
 
   return 1;
 }
@@ -185,7 +177,7 @@ int LCG::get_rn_int()
 {
   multiply();
   
-  return ((unsigned long long) seed) >> 17;
+  return ((unsigned long long) d_seed) >> 17;
 }
 
 // Return a random float in interval [0,1)
@@ -222,8 +214,9 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
   // Check if nspawned is valid
   if (nspawned <= 0) 
   {
+    std::cerr << "WARNING - spawn_rng: nspawned <=0. "
+	      << "Default value of 1 used for nspawned." << std::endl;
     nspawned = 1;
-    fprint(stderr,"WARNING - spawn_rng: nspawned <=0. Default value of 1 used for nspawned.\n");
   }
 
   genptr = new LCG *[nspawned];
@@ -252,8 +245,13 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
 
     if(genptr[i]->d_prime_position > Primes32::max_prime_offset)
     {
-      fprintf(stderr,"WARNING - spawn_rng: gennum: %d > maximum number of independent streams: %d\n\tIndependence of streams cannot be guranteed.\n",
-	      genptr[i]->d_prime_position, LCG::max_streams); 
+      std::cerr << "WARNING - spawn_rng: gennnum: " 
+		<< genptr[i]->d_prime_position 
+		<< " > maximum number of independent streams: "
+		<< LCG::max_streams << std::endl
+		<< "Independence of streams cannot be  guarnateed."
+		<< std::endl;
+    
       genptr[i]->d_prime_position %= Primes32::max_prime_offset;
     }
     
@@ -261,7 +259,7 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
     genptr[i]->d_prime_next = (nspawned+1)*d_prime_next;
 
     // Set the prime that will be used
-    Prime32::getprime_32( genptr[i]->d_prime, genptr[i]->d_prime_position );
+    Primes32::getprime_32( genptr[i]->d_prime, genptr[i]->d_prime_position );
 
     // Set the multiplier
     genptr[i]->d_multiplier = d_multiplier;
@@ -277,7 +275,7 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
     
     // Initialize the seed
     genptr[i]->d_seed = INIT_SEED;	
-    genptr[i]->d_seed ^= ((unsigned LONG64)d_init_seed)<<16;	
+    genptr[i]->d_seed ^= ((unsigned long long)d_init_seed)<<16;	
 
     if (genptr[i]->d_prime == 0) 
       genptr[i]->d_seed |= 1;
@@ -292,7 +290,9 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
   }
 
   d_prime_next = (nspawned+1)*d_prime_next;
-  LCG::num_generators += nspawned;
+
+  // Increment the number of generators
+  LCG::increment_number_of_streams( nspawned );
 
   // Set the input array to the array of LCGs that was created
   *newgens = (Sprng **) genptr;
@@ -303,15 +303,17 @@ int LCG::spawn_rng( int nspawned, Sprng ***newgens )
 int LCG::spawn_rng( int nspawned, 
 		    std::vector<boost::shared_ptr<Sprng> > &newgens )
 {
-  Sprng **temp_newgens;
+  Sprng **tmp_newgens;
 
   // The number of generators spawned
-  int val = spawn_rng( nspawned, &temp_newgens );
+  int val = spawn_rng( nspawned, &tmp_newgens );
 
   newgens.resize( val );
 
   for( int i = 0; i < val; ++i )
-    newgens[i].reset( temp_newgens[i] );
+    newgens[i].reset( tmp_newgens[i] );
+
+  delete[] tmp_newgens;
   
   return val;
 }
@@ -327,24 +329,30 @@ int LCG::free_rng()
 {
   assert( this != NULL );
   
-  LCG::num_generators--;
+  LCG::decrement_number_of_streams();
   
   return LCG::num_generators;
 }
 
 // Pack this generator into a character buffer
+/*! \details A null character buffer should be passed to this function. The
+ * new command will be used to allocate the correct amount of memory. Just
+ * remember to call delete[] on the buffer when you are done using it.
+ */
 int LCG::pack_rng( char **buffer )
 {
-  std::string temp_buffer;
+  std::string tmp_buffer;
   
-  int val = pack_rng( temp_buffer );
+  int val = pack_rng( tmp_buffer );
+  
+  *buffer = new char[tmp_buffer.size()];
 
-  temp_buffer.copy( *buffer, temp_buffer.size() );
+  tmp_buffer.copy( *buffer, tmp_buffer.size() );
 
   return val;
 }
 
-int LCG::pack_rng( std::string &buffer )
+int LCG::pack_rng( std::string &buffer ) const
 {
   // Clear the buffer
   buffer.clear();
@@ -388,90 +396,110 @@ int LCG::pack_rng( std::string &buffer )
 }
 
 // Print this generators info
-int print_rng()
+int LCG::print_rng()
 {
-  std::cout << d_gentype << std::endl << std::endl
-	    << "\tseed = " << d_init_seed 
-	    << ", stream_number = " << d_prime_position 
-	    << "\tparameter = " << d_parameter 
-	    << std::endl << std::endl;
+  print( std::cout );
 
   return 1;
 }
 
-// Unpack this generator from a character buffer
-int unpack_rng( char *packed )
+void LCG::print( std::ostream &os ) const
 {
-  std::string tmp_packed( packed );
-  
-  return unpack_rng( tmp_packed );
+  os << d_gentype << ":" << std::endl
+     << "  seed = " << d_init_seed << "," << std::endl
+     << "  stream_number = " << d_prime_position << "," << std::endl
+     << "  parameter = " << d_parameter << std::endl;
 }
 
-int unpack_rng( std::string &packed )
+// Unpack this generator from a character buffer
+int LCG::unpack_rng( char *packed )
 {
-  std::size_t nbytes, offset = 0;
+  std::size_t nbytes;
   int generator_type;
+  std::string sub_string;
   
   // Load the generator type
   nbytes = sizeof( generator_type );
-  load_value( packed.substr( offset, nbytes ), generator_type );
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, generator_type );
   d_rng_type = intToGeneratorType( generator_type );
-  offset += nbytes;
+  packed += nbytes;
   
   // Load the generator description (not packed because always the same)
   d_gentype = GENTYPE;
   
   // Load the seed
   nbytes = sizeof( d_seed );
-  load_value( packed.substr( offset, nbytes ), d_seed );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_seed );
+  packed += nbytes;
   
   // Load the initial seed
   nbytes = sizeof( d_init_seed );
-  load_value( packed.substr( offset, nbytes ), d_init_seed );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_init_seed );
+  packed += nbytes;
 
   // Load the prime for this generator
   nbytes = sizeof( d_prime );
-  load_value( packed.substr( offset, nbytes ), d_prime );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_prime );
+  packed += nbytes;
 
   // Load the index of the prime position
   nbytes = sizeof( d_prime_position );
-  load_value( packed.substr( offset, nbytes ), d_prime_position );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_prime_position );
+  packed += nbytes;
 
   // Load the next prime
-  nbytes = sizeof( d_next_prime );
-  load_value( packed.substr( offset, nbytes ), d_prime_next );
-  offset += nbytes;
+  nbytes = sizeof( d_prime_next );
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_prime_next );
+  packed += nbytes;
   
   // Load the parameter
   nbytes = sizeof( d_parameter );
-  load_value( packed.substr( offset, nbytes ), d_parameter );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_parameter );
+  packed += nbytes;
 
   // Load the multiplier
   nbytes = sizeof( d_multiplier );
-  load_value( packed.substr( offset, nbytes ), d_multiplier );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_multiplier );
+  nbytes += nbytes;
 
   if(d_parameter < 0 || d_parameter >= 7)
   {
-    fprintf(stderr,"ERROR: Unpacked parameters not acceptable.\n");
+    std::cerr << "ERROR: Unpacked parameters not acceptable." << std::endl;
+    
     return 0;
   }
   
-  d_multiplier = LCG::mults[parameter];
+  d_multiplier = LCG::mults[d_parameter];
   
   // Increment the number of streams
-  LCG::num_generators++;
+  LCG::increment_number_of_streams();
 
   return 1;
 }
 
+int LCG::unpack_rng( const std::string &packed )
+{
+  char* packed_string = const_cast<char*>( packed.c_str() );
+
+  return unpack_rng( packed_string );
+}
+
+// Get the number of open streams
+int LCG::get_number_of_streams()
+{
+  return LCG::num_generators;
+}
+
 // Multiply the seed by the multiplier
-void multiply()
+void LCG::multiply()
 {
   d_seed *= d_multiplier;
   d_seed += d_prime;
@@ -479,7 +507,7 @@ void multiply()
 }
 
 // Advance the seed
-void advance_seed()
+void LCG::advance_seed()
 {
   int i, found;
   unsigned long long an, pmult;
@@ -495,7 +523,9 @@ void advance_seed()
   
   if(found == 0)
   {
-    fprintf(stderr,"WARNING: advance_seed: multiplier not acceptable.\n");
+    std::cerr << "WARNING: advance_seed: multiplier not acceptable."
+	      << std::endl;
+    
     return ;
   }
 
@@ -531,12 +561,32 @@ void advance_seed()
     pmult = 0x6407de700000LL;
     break;
   default:
-    fprintf(stderr,"WARNING: advance_seed parameters for multiplier %d not available\n", i);
+    std::cerr << "WARNING: advance_seed parameters for multiplier " 
+	      << i << " not available." << std::endl;
+    
     return;
   }
   
   d_seed = d_seed*an + pmult*d_prime;
   d_seed &= LSB48;
+}
+
+// Increment the number of open streams
+void LCG::increment_number_of_streams( int num )
+{
+  LCG::num_generators += num;
+  
+  if( LCG::num_generators >= LCG::max_streams )
+    std::cerr << "WARNING: " << LCG::num_generators << " open LCG streams. "
+	      << "Independence can only be guaranteed with " 
+	      << LCG::max_streams << " LCG streams."
+	      << std::endl;
+}
+
+// Decrement the number of open streams
+void LCG::decrement_number_of_streams( int num )
+{
+  LCG::num_generators -= num;
 }
 
 } // end namespace sprng

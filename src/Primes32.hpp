@@ -28,20 +28,22 @@ public:
 
   //! Get the number of primes requested
   static int getprime_32( int need,
-			  std::vector<unsigned int> &prime_array,
+			  std::vector<int> &prime_array,
 			  int offset );
 
   //! Get a single prime
-  static int getprime_32( unsigned int &prime, int offset );
-
-private:
+  static int getprime_32( int &prime, int offset );
 
   // sqrt(2)*2^23 + 2
   static const int max_prime = 11863285; 
+  
   // sqrt(max_prime)
   static const int min_prime = 3444;
+  
   // Total number of available primes
   static const int max_prime_offset = 779156;
+
+private:
 
   // Full prime array
   static const int full_prime_list_size = 1778;

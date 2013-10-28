@@ -12,6 +12,9 @@
 #ifndef SEED_HELPERS_HPP
 #define SEED_HELPERS_HPP
 
+// SPRNG Includes
+#include "SPRNG_mpi_config.hpp"
+
 namespace sprng{
 
 //! Make a new seed from the time
@@ -21,14 +24,6 @@ int make_new_seed();
 int make_new_seed_mpi();
 
 } // end namespace sprng
-
-//---------------------------------------------------------------------------//
-// Definition includes.
-//---------------------------------------------------------------------------//
-
-#include "SeedHelpers_def.hpp"
-
-//---------------------------------------------------------------------------//
 
 #endif // end SEED_HELPERS_HPP
 

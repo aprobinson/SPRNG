@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 //! 
-//! \file    Primes64.hpp
+//! \file    Primes64.cpp
 //! \author  ?
 //! \brief   Definition of struct to handle 64bit primes.
 //! \details This file originally appeared in the sprng4 library. It has been
@@ -9,13 +9,13 @@
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef PRIMES_64_DEF_HPP
-#define PRIMES_64_DEF_HPP
-
 // Std Lib Includes
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+// SPRNG Includes
+#include "Primes64.hpp"
 
 namespace sprng{
 
@@ -15775,8 +15775,6 @@ const unsigned int Primes64::prime_list_64[] =
 
 } // end namespace sprng
 
-#endif // end PRIMES_64_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end Primes64_def.hpp
+// end Primes64.cpp
 //---------------------------------------------------------------------------//

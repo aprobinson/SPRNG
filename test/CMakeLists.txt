@@ -1,11 +1,12 @@
-SET(SRT ${CMAKE_SOURCE_DIR}/src)
+SET(SRC ${CMAKE_SOURCE_DIR}/src)
 
 ADD_EXECUTABLE(tstStore	
   tstStore.cpp)
 ADD_TEST(Store_test tstStore)
 
 ADD_EXECUTABLE(tstMPIHelpers
-  tstMPIHelpers.cpp)
+  tstMPIHelpers.cpp
+  ${SRC}/MPIHelpers.cpp)
 IF(${${PROJECT_NAME}_ENABLE_MPI})
   TARGET_LINK_LIBRARIES(tstMPIHelpers ${MPI_CXX_LIBRARIES})
   ADD_TEST(MPIHelpers_test_1_proc
@@ -21,7 +22,8 @@ ELSE()
 ENDIF()
 
 ADD_EXECUTABLE(tstSeedHelpers
-  tstSeedHelpers.cpp)
+  tstSeedHelpers.cpp
+  ${SRC}/SeedHelpers.cpp)
 ADD_TEST(SeedHelpers_test tstSeedHelpers)
 IF(${${PROJECT_NAME}_ENABLE_MPI})
   TARGET_LINK_LIBRARIES(tstSeedHelpers ${MPI_CXX_LIBRARIES})
@@ -30,13 +32,22 @@ IF(${${PROJECT_NAME}_ENABLE_MPI})
 ENDIF()
 
 ADD_EXECUTABLE(tstPrimes32
-  tstPrimes32.cpp)
+  tstPrimes32.cpp
+  ${SRC}/Primes32.cpp)
 ADD_TEST(Primes32_test tstPrimes32)
 
 ADD_EXECUTABLE(tstPrimes64
-  tstPrimes64.cpp)
+  tstPrimes64.cpp
+  ${SRC}/Primes64.cpp)
 ADD_TEST(Primes64_test tstPrimes64)
 
 ADD_EXECUTABLE(tstGeneratorType
-  tstGeneratorType.cpp)
+  tstGeneratorType.cpp
+  ${SRC}/GeneratorType.cpp)
 ADD_TEST(GeneratorType_test tstGeneratorType)
+
+ADD_EXECUTABLE(tstLFG
+  tstLFG.cpp
+  ${SRC}/LFG.cpp
+  ${SRC}/GeneratorType.cpp)
+ADD_TEST(LFG_test tstLFG)

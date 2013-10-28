@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file    Primes32_def.hpp
+//! \file    Primes32.cpp
 //! \author  ?
 //! \brief   Definition of struct to handle 32bit primes.
 //! \details This file originally appeared in the sprng4 library. It has been
@@ -9,13 +9,13 @@
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef PRIMES_32_DEF_HPP
-#define PRIMES_32_DEF_HPP
-
 // Std Lib Includes
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+// SPRNG Includes
+#include "Primes32.hpp"
 
 namespace sprng{
 
@@ -1939,9 +1939,7 @@ const int Primes32::prime_list_32[] =
 
 } // end namespace sprng
 
-#endif  // end PRIMES_32_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end Primes32_def.hpp
+// end Primes32.cpp
 //---------------------------------------------------------------------------//
 

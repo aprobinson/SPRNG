@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file    BigRat_def.hpp
+//! \file    BigRat.cpp
 //! \author  J. Ren (Florida State University, ren@csit.fsu.edu)
 //! \brief   Implementation file for arithmetic on large rationals
 //! \details This file originally appeared in the sprng4 library. It has been
@@ -9,8 +9,8 @@
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef BIG_RAT_DEF_HPP
-#define BIG_RAT_DEF_HPP
+// SPRNG Includes
+#include "BigRat.hpp"
 
 namespace sprng{
 
@@ -46,8 +46,6 @@ void BigRat::br_set_den( const BigNum &den )
 
 } // end namespace sprng
 
-#endif // end BIG_RAT_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end BigRat_def.hpp
+// end BigRat.cpp
 //---------------------------------------------------------------------------//

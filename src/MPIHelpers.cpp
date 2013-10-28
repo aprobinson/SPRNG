@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file    MPIHelpers.hpp
+//! \file    MPIHelpers.cpp
 //! \author  ?
 //! \brief   Definition of MPI helper functions.
 //! \details This file originally appeared in the sprng4 library. It has been
@@ -9,16 +9,8 @@
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef MPI_HELPERS_DEF_HPP
-#define MPI_HELPERS_DEF_HPP
-
 // SPRNG Includes
-#include "SPRNG_mpi_config.hpp"
-
-// MPI Includes
-#ifdef HAVE_SPRNG_MPI
-#include <mpi.h>
-#endif
+#include "MPIHelpers.hpp"
 
 namespace sprng{
 
@@ -42,8 +34,6 @@ void get_proc_info_mpi( int &myid, int &nprocs )
 
 } // end namespace sprng
 
-#endif // end MPI_HELPERS_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end MPIHelpers_def.hpp
+// end MPIHelpers.cpp
 //---------------------------------------------------------------------------//

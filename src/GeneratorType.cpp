@@ -1,16 +1,16 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file   GeneratorType_def.hpp
+//! \file   GeneratorType.cpp
 //! \author Alex Robinson
 //! \brief  Enumeration for the different types of generators
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef GENERATOR_TYPE_DEF_HPP
-#define GENERATOR_TYPE_DEF_HPP
-
 // Std Lib Includes
 #include <assert.h>
+
+// SPRNG Includes
+#include "GeneratorType.hpp"
 
 namespace sprng{
 
@@ -19,12 +19,12 @@ int generatorTypeToInt( const GeneratorType gtype )
 {
   switch( gtype )
   {
-  case LFG: return 0;
-  case LCG: return 1;
-  case LCG64: return 2;
-  // case CMRG: return 3;
-  // case MLFG: return 4;
-  // case PMLCG: return 5;
+  case LFG_TYPE: return 0;
+  case LCG_TYPE: return 1;
+  case LCG64_TYPE: return 2;
+  // case CMRG_TYPE: return 3;
+  // case MLFG_TYPE: return 4;
+  // case PMLCG_TYPE: return 5;
   }
 }
 
@@ -35,20 +35,17 @@ GeneratorType intToGeneratorType( const int gtype )
 
   switch( gtype )
   {
-  case 0: return LFG;
-  case 1: return LCG;
-  case 2: return LCG64;
-  // case 3: return CMRG;
-  // case 4: return MLFG;
-  // case 5: return PMLCG;
+  case 0: return LFG_TYPE;
+  case 1: return LCG_TYPE;
+  case 2: return LCG64_TYPE;
+  // case 3: return CMRG_TYPE;
+  // case 4: return MLFG_TYPE;
+  // case 5: return PMLCG_TYPE;
   }
 }
 
-
 } // end namespace sprng
 
-#endif // end GENERATOR_TYPE_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end GeneratorType_def.hpp
+// end GeneratorType.cpp
 //---------------------------------------------------------------------------//

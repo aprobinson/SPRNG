@@ -1,15 +1,13 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file    SprngFactory_def.hpp
+//! \file    SprngFactory.cpp
 //! \author  Alex Robinson
 //! \brief   Definition of a Simple struct to aid the Sprng class 
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef SPRNG_FACTORY_DEF_HPP
-#define SPRNG_FACTORY_DEF_HPP
-
 // SPRNG Includes
+#include "SprngFactory.hpp"
 #include "LFG.hpp"
 #include "LCG.hpp"
 #include "LCG64.hpp"
@@ -29,19 +27,17 @@ SprngFactory::SprngPtr SprngFactory::create() const
 {
   switch( d_gen_type )
   {
-  case LFG: return new LFG;
-  case LCG: return new LCG;
-  case LCG64: return new LCG64;
-  case CMRG: return new CMRG;
-  case MLFG: return new MLFG;
-  case PMLCG: return new PMLCG;
+  case LFG_TYPE: return new LFG;
+  case LCG_TYPE: return new LCG;
+  case LCG64_TYPE: return new LCG64;
+  case CMRG_TYPE: return new CMRG;
+  case MLFG_TYPE: return new MLFG;
+  case PMLCG_TYPE: return new PMLCG;
   }
 }
 
 } // end namespace sprng
 
-#endif // end SPRNG_FACTORY_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end SprngFactory_def.hpp
+// end SprngFactory.cpp
 //---------------------------------------------------------------------------//

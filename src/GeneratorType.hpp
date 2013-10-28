@@ -13,12 +13,12 @@ namespace sprng{
 
 //! Generator Type enumeration
 enum GeneratorType{
-  LFG,
-  LCG,
-  LCG64// ,
-  // CMRG,
-  // MLFG,
-  // PMLCG
+  LFG_TYPE,
+  LCG_TYPE,
+  LCG64_TYPE// ,
+  // CMRG_TYPE,
+  // MLFG_TYPE,
+  // PMLCG_TYPE
 };
 
 //! Convert a GeneratorType to an int
@@ -28,14 +28,6 @@ int generatorTypeToInt( const GeneratorType gtype );
 GeneratorType intToGeneratorType( const int gtype );
 
 } // end SPRNG
-
-//---------------------------------------------------------------------------//
-// Definition includes.
-//---------------------------------------------------------------------------//
-
-#include "GeneratorType_def.hpp"
-
-//---------------------------------------------------------------------------//
 
 #endif // end GENERATOR_TYPE_HPP
 

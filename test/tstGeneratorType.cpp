@@ -22,12 +22,12 @@
 // Check that a generator type can be converted to an int
 BOOST_AUTO_TEST_CASE( generatorTypeToInt )
 {
-  sprng::GeneratorType gen_type0 = sprng::LFG;
-  sprng::GeneratorType gen_type1 = sprng::LCG;
-  sprng::GeneratorType gen_type2 = sprng::LCG64;
-  // sprng::GeneratorType gen_type3 = sprng::CMRG;
-  // sprng::GeneratorType gen_type4 = sprng::MLFG;
-  // sprng::GeneratorType gen_type5 = sprng::PMLCG;
+  sprng::GeneratorType gen_type0 = sprng::LFG_TYPE;
+  sprng::GeneratorType gen_type1 = sprng::LCG_TYPE;
+  sprng::GeneratorType gen_type2 = sprng::LCG64_TYPE;
+  // sprng::GeneratorType gen_type3 = sprng::CMRG_TYPE;
+  // sprng::GeneratorType gen_type4 = sprng::MLFG_TYPE;
+  // sprng::GeneratorType gen_type5 = sprng::PMLCG_TYPE;
 
   int gen_type0_int = sprng::generatorTypeToInt( gen_type0 );
   int gen_type1_int = sprng::generatorTypeToInt( gen_type1 );
@@ -62,12 +62,12 @@ BOOST_AUTO_TEST_CASE( intToGeneratorType )
   // sprng::GeneratorType gen_type4 = sprng::intToGeneratorType( gen_type4_int );
   // sprng::GeneratorType gen_type5 = sprng::intToGeneratorType( gen_type5_int );
   
-  BOOST_CHECK_EQUAL( gen_type0, sprng::LFG );
-  BOOST_CHECK_EQUAL( gen_type1, sprng::LCG );
-  BOOST_CHECK_EQUAL( gen_type2, sprng::LCG64 );
-  // BOOST_CHECK_EQUAL( gen_type3, sprng::CMRG );
-  // BOOST_CHECK_EQUAL( gen_type4, sprng::MLFG );
-  // BOOST_CHECK_EQUAL( gen_type5, sprng::PMLCG );
+  BOOST_CHECK_EQUAL( gen_type0, sprng::LFG_TYPE );
+  BOOST_CHECK_EQUAL( gen_type1, sprng::LCG_TYPE );
+  BOOST_CHECK_EQUAL( gen_type2, sprng::LCG64_TYPE );
+  // BOOST_CHECK_EQUAL( gen_type3, sprng::CMRG_TYPE );
+  // BOOST_CHECK_EQUAL( gen_type4, sprng::MLFG_TYPE );
+  // BOOST_CHECK_EQUAL( gen_type5, sprng::PMLCG_TYPE );
 }
 
 //---------------------------------------------------------------------------//

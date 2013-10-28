@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file    BigNum_def.hpp
+//! \file    BigNum.cpp
 //! \author  J. Ren (Florida State University, ren@csit.fsu.edu)
 //! \brief   Implementation file for arithmetic on large integers
 //! \details This file originally appeared in the sprng4 library. It has been
@@ -8,9 +8,6 @@
 //!          the needs of FACEMC.
 //!
 //---------------------------------------------------------------------------//
-
-#ifndef BIG_NUM_DEF_HPP
-#define BIG_NUM_DEF_HPP
 
 // Std Lib Includes
 #include <stdio.h>
@@ -21,7 +18,8 @@
 #include <ctype.h>
 #include <cstring>
 
-using namespace std;
+// SPRNG Includes
+#include "BigNum.hpp"
 
 #define NUMBITS 64
 
@@ -1373,9 +1371,7 @@ int C2I( char c )
 
 } // end namespace sprng
 
-#endif // end BIG_NUM_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end BigNum_def.hpp
+// end BigNum.cpp
 //---------------------------------------------------------------------------//
 

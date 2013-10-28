@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------//
 //!
-//! \file    SeedHelpers.hpp
+//! \file    SeedHelpers.cpp
 //! \author  ?
 //! \brief   Definition of seed helper functions.
 //! \details This file originally appeared in the sprng4 library. It has been
@@ -9,21 +9,11 @@
 //!
 //---------------------------------------------------------------------------//
 
-#ifndef SEED_HELPERS_DEF_HPP
-#define SEED_HELPERS_DEF_HPP
-
 // Std Lib Includes
 #include <ctime>
 
 // SPRNG Includes
-#include "SPRNG_mpi_config.hpp"
-
-// MPI Includes
-#ifdef HAVE_SPRNG_MPI
-#include <mpi.h>
-#endif
-
-using namespace std;
+#include "SeedHelpers.hpp"
 
 namespace sprng{
   
@@ -82,9 +72,6 @@ int make_new_seed_mpi()
 
 } // end namespace sprng
 
-
-#endif // end SEED_HELPERS_DEF_HPP
-
 //---------------------------------------------------------------------------//
-// end SeedHelpers_def.hpp
+// end SeedHelpers.cpp
 //---------------------------------------------------------------------------//

@@ -37,7 +37,7 @@ public:
   LCG& operator=( const LCG &c );
   
   //! Destructor
-  ~LCG();
+  virtual ~LCG();
 
   //@{
   //! Generator interface
@@ -119,20 +119,6 @@ private:
 
   // A multiplier for the generator
   unsigned long long d_multiplier; 
-};
-
-// Initialize the max streams static member
-const int LCG::max_streams = 1<<19;
-
-// Initialize the mults static member array
-const unsigned long long LCG::mults[] = {
-0x2875a2e7b175LL
-0x5deece66dLL
-0x3eac44605265LL
-0x1ee1429cc9f5LL
-0x275b38eb4bbdLL
-0x739a9cb08605LL
-0x3228d7cc25f5LL
 };
 
 } // end namespace sprng

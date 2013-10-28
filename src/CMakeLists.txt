@@ -1,14 +1,11 @@
 SET(HEADERS
   SeedHelpers.hpp
-  SeedHelpers_def.hpp
   MPIHelpers.hpp
-  MPIHelpers_def.hpp
   GeneratorType.hpp
-  GeneratorType_def.hpp
+  Store.hpp
+  Store_def.hpp
   SprngFactory.hpp
-  SprngFactory_def.hpp
   SimpleSprng.hpp
-  SimpleSprng_def.hpp
   Sprng.hpp
   LFG.hpp
   LCG.hpp

@@ -58,6 +58,9 @@
 // Std Lib Includes
 #include <string>
 
+// Boost Includes
+#include <boost/shared_array.hpp>
+
 // SPRNG Includes
 #include "Sprng.hpp"
 #include "GeneratorType.hpp"
@@ -80,7 +83,7 @@ public:
   LFG& operator=( const LFG &c );
 
   //! Destructor
-  ~LFG();
+  virtual ~LFG();
 
   //@{
   //! Generator interface
@@ -98,8 +101,8 @@ public:
 
   //! Spawn new generators
   int spawn_rng( int nspawned, Sprng ***newgens );
-  void spawn_rng( int nspawned,
-		  std::vector<boost::shared_ptr<Sprng> &newgens );
+  int spawn_rng( int nspawned,
+		  std::vector<boost::shared_ptr<Sprng> > &newgens );
 
   //! Return the generator seed
   int get_seed_rng();
@@ -108,13 +111,15 @@ public:
   int free_rng();
 
   //! Pack this generator into a character buffer
+  int pack_rng( char **buffer );
   int pack_rng( std::string &buffer );
 
   //! Print this generators info
   int print_rng();
 
   //! Unpack this generator from a character buffer
-  int unpack_rng( std::string &packed );
+  int unpack_rng( char *packed );
+  int unpack_rng( const std::string &packed );
   //@}
 
 private:
@@ -152,23 +157,29 @@ private:
 			   boost::shared_array<unsigned> &nstart_local,
 			   unsigned initseed_local );
 
-  //! Max number of LFG streams possible
+  //! Increment the number of open streams
+  static void increment_number_of_streams( int num = 1 );
+
+  //! Decrement the number of open streams
+  static void decrement_number_of_streams( int num = 1 );
+
+  // Max number of LFG streams possible
   static const int max_streams = 0x7fffffff;
 
-  //! Number of streams currently open
-  static int num_generators = 0;
+  // Number of streams currently open
+  static int num_generators;
 
-  //! Global generator seed
-  static int global_seed = 0;
+  // Global generator seed
+  static int global_seed;
 
-  //! Global L value
-  static int global_lval = 0;
+  // Global L value
+  static int global_lval;
   
-  //! Global K value
-  static int global_kval = 0;
+  // Global K value
+  static int global_kval;
 
-  //! Array of valid seeds
-  const vstruct valid[11];
+  // Array of valid seeds
+  static const vstruct valid[11];
 
   // Generator type
   GeneratorType d_rng_type;
@@ -207,12 +218,6 @@ private:
   int d_param;
 
 };
-
-// Initialize the valid static member array
-const vstruct valid[] = 
-  { {1279,861,1,233}, {17,5,1,10}, {31,6,1,2},
-    {55,24,1,11}, {63,31,1,14}, {127,97,1,21}, {521,353,1,100},
-    {521,168,1,83}, {607,334,1,166}, {607,273,1,105}, {1279,418,1,208}};
 
 } // end namespace sprng
 

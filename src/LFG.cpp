@@ -89,9 +89,24 @@
 
 namespace sprng{
 
+// Initialize static member data
+int LFG::num_generators = 0;
+int LFG::global_seed = 0;
+int LFG::global_lval = 0;
+int LFG::global_kval = 0;
+const LFG::vstruct LFG::valid[] = 
+  { {1279,861,1,233}, {17,5,1,10}, {31,6,1,2},
+    {55,24,1,11}, {63,31,1,14}, {127,97,1,21}, {521,353,1,100},
+    {521,168,1,83}, {607,334,1,166}, {607,273,1,105}, {1279,418,1,208}};
+#ifdef HAVE_SPRNG_MPI
+MPI_Group LFG::mpi_lfg_group = MPI_GROUP_NULL;
+MPI_Comm LFG::mpi_lfg_group_comm = MPI_COMM_NULL;
+int LFG::mpi_lfg_group_proc_id = 0;
+#endif
+
 // Default constructor
 LFG::LFG() 
-  : d_rng_type( LFG ),
+  : d_rng_type( LFG_TYPE ),
     d_gentype( GENTYPE ),
     d_si(),
     d_r0(),
@@ -122,7 +137,7 @@ LFG::LFG( const LFG &c )
 { /* ... */ }
 
 // Assignment operator
-LFG& operator=( const LFG &c )
+LFG& LFG::operator=( const LFG &c )
 {
   if( this != &c )
   {
@@ -157,34 +172,33 @@ LFG::~LFG()
  */
 int LFG::init_rng( int gn, int tg, int s, int m )
 {
-  int doexit=0, i, k, length;
-  LFG **p = NULL;
-  boost::shared_array<unsigned> nstart, si_local;
+  int i, k, length;
 
   // Check if tg is valid
-  if (tg <= 0) 
+  if( tg <= 0 ) 
   {
+    std::cerr << "WARNING - init_rng: total_gen <= 0. "
+	      << "Default value of 1 used for total_gen." 
+	      << std::endl;
     tg = 1;
-    errprint("WARNING","init_rng","Total_gen <= 0. Default value of 1 used for total_gen");
   }
-
-  // Check if gn is valid
-  if (gn >= MAX_STREAMS) 
-    fprintf(stderr,"WARNING - init_rng: gennum: %d > maximum number of independent streams: %d\n\tIndependence of streams cannot be guranteed.\n",
-	    gn, MAX_STREAMS); 
-
-  if (gn < 0 || gn >= tg) 
+  
+  // Check if gn is in range
+  if( gn < 0 || gn >= tg ) 
   {
-    errprint("ERROR","init_rng","gennum out of range. "); 
+    std::cerr << "ERROR - init_rng: gennum out of range." << std::endl;
     return 0;
   }
 
   // Only 31 LSB of seed considered
   s &= 0x7fffffff;		
   
+  // Check if the parameter is in range
   if (m < 0 || m >= 11) 
   {
-    errprint("WARNING","init_rng","Parameter not valid. Using Default param");
+    std::cerr << "WARNING - init_rng: Parameter not valid. "
+	      << "Using defulat param (m=" << 0 << ")"
+	      << std::endl;
     m = 0;
   }
   
@@ -195,54 +209,55 @@ int LFG::init_rng( int gn, int tg, int s, int m )
   // access while defining generator parameters for the first time.
   if ( !LFG::global_lval ) 
   {
-    LFG::global_lval = length; /* determine parameters   */
+    LFG::global_lval = length; 
     LFG::global_kval = k;
     LFG::global_seed = s^GS0;
   }
+
+  // Check if the global variables will be changed
   else 
   {
-    if( LFG::global_lval != length ) 
-      doexit++;
-    
+    if( LFG::global_lval != length )
+    { 
+      std::cerr << "WARNING - init_rng: changing global L value! "
+		<< "Independence of streams is not guaranteed."
+		<< std::endl;
+    }
     if( s != (LFG::global_seed^GS0) ) 
-      doexit += 2;
-
-    if( doexit ) 
     {
-      if( doexit&1 ) 
-	errprint("WARNING","init_rng","changing global L value! Independence of streams is not guaranteed");
-      if( doexit&2 ) 
-	errprint("WARNING","init_rng","changing global seed value! Independence of streams is not guaranteed");
+      std::cerr << "WARNING - init_rng: changing global seed value! "
+		<< "Independence of streams is not guaranteed."
+		<< std::endl;
     }
   }
   
   // Define the starting vector for the initial node 
-  nstart.resize( length-1 );
+  boost::shared_array<unsigned> nstart( new unsigned[length-1] );
   nstart[0] = gn;
 
   for( i=1; i<length-1; i++ ) 
     nstart[i] = 0;
 
   // Create a generator
-  p = LFG::initialize( 0, 1, m, s^GS0, nstart, s );  
+  LFG **p = LFG::initialize( d_rng_type , 1, m, s^GS0, nstart, s );  
 
-  if (p == NULL) 
+  if( p == NULL ) 
     return 0;
   
   p[0]->d_stream_number = gn;
 
   // Update si array to allow for future spawning of generators
-  si_local = p[0]->d_si;
+  boost::shared_array<unsigned> si_local = p[0]->d_si;
 
   while( si_local[0] < tg && !si_local[1] ) 
     LFG::si_double(si_local,si_local,length);
 
-  // Increment the number of open streams
-  LFG::num_generators++;
+  // Increment the number of open streams (on process)
+  LFG::increment_number_of_streams();
       
-  d_rng_type = LFG;
+  d_rng_type = LFG_TYPE;
   d_gentype = p[0]->d_gentype;
-  d_si = p[0]->si;
+  d_si = p[0]->d_si;
   d_r0 = p[0]->d_r0;
   d_r1 = p[0]->d_r1;
   d_stream_number = p[0]->d_stream_number;
@@ -298,7 +313,7 @@ float LFG::get_rn_flt()
   // Use unsigned long instead of unsigned int due to bug in SGI compiler
   unsigned long new_val; 
   int hptr_local, lptr;
-  int local_lval, local_kv;
+  int local_lval, local_kval;
 	
   local_lval = d_lval;
   local_kval = d_kval;
@@ -371,19 +386,20 @@ double LFG::get_rn_dbl()
 // Spawn new generators
 int LFG::spawn_rng( int nspawned, Sprng ***newgens )
 {
-  LFG **q = NULL
+  
   int i;
-  boost::shared_array<unsigned> p;
   
   // Check if nspawned is valid
   if( nspawned <= 0 ) 
   {
     nspawned = 1;
-    errprint("WARNING","spawn_rng","Nspawned <= 0. Default value of 1 used for nspawned");
+    std::cerr << "WARNING - spawn_rng: nsawneed <= 0. "
+	      << "Default value of 1 used for nspawned."
+	      << std::endl;
   }
   
-  p = d_si;
-  q = LFG::initialize(d_rng_type,nspawned,d_param,d_seed,p,d_init_seed);
+  boost::shared_array<unsigned> p = d_si;
+  LFG **q = LFG::initialize(d_rng_type,nspawned,d_param,d_seed,p,d_init_seed);
 
   if( q == NULL )
   {
@@ -394,7 +410,7 @@ int LFG::spawn_rng( int nspawned, Sprng ***newgens )
   LFG::si_double(p,p,d_lval);
 
   // Increment the number of open streams
-  LFG::num_generators += nspawned;
+  LFG::increment_number_of_streams( nspawned );
       
   *newgens = (Sprng **) q;
 
@@ -402,11 +418,11 @@ int LFG::spawn_rng( int nspawned, Sprng ***newgens )
 }
 
 int LFG::spawn_rng( int nspawned,
-		    std::vector<boost::shared_ptr<Sprng> &newgens )
+		    std::vector<boost::shared_ptr<Sprng> > &newgens )
 {
   Sprng **temp_newgens;
 
-  // Then number of generators spawned
+  // Number of generators spawned
   int val = spawn_rng( nspawned, &temp_newgens );
 
   newgens.resize( val );
@@ -420,14 +436,14 @@ int LFG::spawn_rng( int nspawned,
 // Return the generator seed
 int LFG::get_seed_rng()
 {
-  return (GS0^LFG::global_seed)
+  return (GS0^LFG::global_seed);
 }
 
 // Free the memory allocated to this generator
 int LFG::free_rng()
 {
-  LFG::num_generators--;
-  
+  LFG::decrement_number_of_streams();
+    
   return LFG::num_generators;
 }
 
@@ -507,14 +523,14 @@ int LFG::print_rng()
 }
 
 // Unpack this generator from a character buffer
-int unpack_rng( char *packed )
+int LFG::unpack_rng( char *packed )
 {
   std::string tmp_packed( packed );
   
   return unpack_rng( tmp_packed );
 }
 
-int unpack_rng( std::string &packed )
+int LFG::unpack_rng( const std::string &packed )
 {
   int doexit=0, i, found, length, k;
   int local_seed, local_param;
@@ -554,7 +570,8 @@ int unpack_rng( std::string &packed )
 
   if( !valid_values )
   {
-    fprintf(stderr,"ERROR: Unpacked L and K values are not acceptable.\n");
+    std::cerr << "ERROR: Unpacked L and K values are not acceptable."
+	      << std::endl;
     return 0;
   }
 
@@ -583,8 +600,9 @@ int unpack_rng( std::string &packed )
   {
     if( local_seed != LFG::global_seed )
     {
-      errprint("WARNING","unpack_rng","different global seed value!");
-      fprintf(stderr,"\t Independence of streams is not guaranteed\n");
+      std::cerr << "WARNGING -unpack_rng: different global seed value! "
+		<< "Independence of streams is not guaranteed."
+		<< std::endl;
     }
   }
 
@@ -601,23 +619,23 @@ int unpack_rng( std::string &packed )
   load_value( packed.substr( offset, nbytes), d_stream_number );
   
   // Resize the stored arrays
-  d_si.resize( length - 1 );
-  d_r0.resize( length );
-  d_r1.resize( length );
+  d_si.reset( new unsigned[length - 1] );
+  d_r0.reset( new unsigned[length] );
+  d_r1.reset( new unsigned[length] );
 
   // Load the next branch seeds
-  nbytes = sizeof( unsigned )*d_si.size();
-  load_array( packed.substr( offset, nbytes ), d_si.size(), d_si );
+  nbytes = sizeof( unsigned )*(length-1);
+  load_array( packed.substr( offset, nbytes ), length-1, d_si );
   offset += nbytes;
   
   // Load the even generator
-  nbytes = sizeof( unsigned )*d_r0.size();
-  load_array( packed.substr( offset, nbytes ), d_r0.size(), d_r0 );
+  nbytes = sizeof( unsigned )*length;
+  load_array( packed.substr( offset, nbytes ), length, d_r0 );
   offset += nbytes;
 
   // Load the odd generator
-  nbytes = sizeof( unsigned )*d_r1.size();
-  load_array( packed.substr( offset, nbytes ), d_r1.size(), d_r1 );
+  nbytes = sizeof( unsigned )*length;
+  load_array( packed.substr( offset, nbytes ), length, d_r1 );
   offset += nbytes;
   
   // Load the integer pointer into fill
@@ -625,7 +643,8 @@ int unpack_rng( std::string &packed )
   load_value( packed.substr( offset, nbytes ), d_hptr );
   offset += nbytes;
   
-  LFG::num_generators++;
+  // Increment the number of streams
+  LFG::increment_number_of_streams();
 
   return 1;
 }
@@ -646,7 +665,7 @@ int LFG::bitcnt( int x )
  * (64,4,3,1,0). Each call steps the register 64 times. Two words are used
  * to represent the register and to allow for an integer size of 32 bits.
  */
-int advance_reg( boost::shared_array<int> &reg_fill )
+int LFG::advance_reg( boost::shared_array<int> &reg_fill )
 {
   assert( reg_fill );
   
@@ -693,16 +712,16 @@ int advance_reg( boost::shared_array<int> &reg_fill )
  * global seed. Fill the shift register with two copies of this number except
  * when its equal to zero.
  */
-int get_fill( boost::shared_array<unsigned> &n, 
-	      boost::shared_array<unsigned> &r, 
-	      int param_local, 
-	      unsigned seed_local )
+int LFG::get_fill( boost::shared_array<unsigned> &n, 
+		   boost::shared_array<unsigned> &r, 
+		   int param_local, 
+		   unsigned seed_local )
 {
   assert( n );
   assert( r );
   
   int i,j,k, length;
-  boost::shared_array<int> temp( 2 );
+  boost::shared_array<int> temp( new int[2] );
 
   length = LFG::valid[param_local].L;
   
@@ -739,9 +758,9 @@ int get_fill( boost::shared_array<unsigned> &n,
 }
 
 // Update index for next spawning
-void si_double( boost::shared_array<unsigned> &a, 
-		boost::shared_array<unsigned> &b, 
-		int length )
+void LFG::si_double( boost::shared_array<unsigned> &a, 
+		     boost::shared_array<unsigned> &b, 
+		     int length )
 {
   assert( a );
   assert( b );
@@ -749,7 +768,11 @@ void si_double( boost::shared_array<unsigned> &a,
   int i;
 
   if ( b[length-2]&(1<<MAX_BIT_INT) )
-    errprint("WARNING","si_double",TOOMANY);
+  {
+    std::cerr << "Warning - si_double: generator has branched maximum number "
+	      << "times;\nindependence of generators no longer guaranteed."
+	      << std::endl;
+  }
   
   a[length-2] = (INTX2_MASK&b[length-2])<<1;
 
@@ -774,11 +797,11 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
   
   int i,j,k,l;
   int length = LFG::valid[param_local].L;
-  boost::shared_array<int> order( new int[ngen_local] ), nindex;
-  LFG **q;
+  boost::shared_array<unsigned int> order( new unsigned int[ngen_local] ), 
+    nindex;
 
   // Allocate memory for the fill of each generator
-  q = new LFG *[ngen_local];
+  LFG **q = new LFG *[ngen_local];
 
   if( q == NULL )
     return NULL;
@@ -791,7 +814,7 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
       return NULL;
     
     // Initialize generator member data
-    q[i]->d_rng_type = d_rng_type_local;
+    q[i]->d_rng_type = rng_type_local;
     q[i]->d_hptr = length - 1;
     q[i]->d_si.reset( new unsigned[length-1] );
     q[i]->d_r0.reset( new unsigned[length] );
@@ -803,8 +826,8 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
     q[i]->d_lval = length;
     q[i]->d_kval = LFG::valid[param_local].K;
     q[i]->d_param = param_local;
-    q[i]->d_seed = d_seed_local;
-    q[i]->d_init_seed = d_initseed_local;
+    q[i]->d_seed = seed_local;
+    q[i]->d_init_seed = initseed_local;
     q[i]->d_gentype = GENTYPE;
   }
   
@@ -859,7 +882,7 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
   {
     k = 0;
     
-    for( j=1; j<lv-1; j++ )
+    for( j=1; j < LFG::global_lval-1; j++ )
       if( q[i]->d_si[j] ) 
 	k = 1;
     if( !k ) 
@@ -878,6 +901,24 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
   }   
 
   return q;
+}
+
+// Increment the number of open streams
+void LFG::increment_number_of_streams( int num )
+{
+  LFG::num_generators += num;
+
+  if( num_generators >= LFG::max_streams )
+    std::cerr << "WARNING: " << LFG::num_generators << " open LFG streams. "
+	      << "Independence can only be guaranteed with " 
+	      << LFG::max_streams << " LFG streams."
+	      << std::endl;
+}
+
+// Decrement the number of open streams
+void LFG::decrement_number_of_streams( int num )
+{
+  LFG::num_generators -= num;
 }
 
 } // end namespace sprng

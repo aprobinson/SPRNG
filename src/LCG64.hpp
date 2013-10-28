@@ -40,7 +40,7 @@ public:
   LCG64& operator=( const LCG64 &c );
   
   //! Destructor
-  ~LCG64();
+  virtual ~LCG64();
 
   //@{
   //! Generator interface
@@ -120,12 +120,6 @@ private:
   // A multiplier for the generator
   unsigned long long d_multiplier;
 };
-
-// Initialize the parameter list static member array
-const unsigned int LCG64::parameter_list[][] =
-  {{0x87b0b0fdU, 0x27bb2ee6U}, 
-   {0xe78b6955U, 0x2c6fe96eU},
-   {0x31a53f85U, 0x369dea0fU}};
 
 } // end namespace sprng
 

@@ -55,7 +55,7 @@ public:
   virtual int free_rng() = 0;
 
   //! Pack this generator into a character buffer
-  virtual int pack_rng( char **buffer ) = 0
+  virtual int pack_rng( char **buffer ) = 0;
   virtual int pack_rng( std::string &buffer ) = 0;
 
   //! Print this generators info

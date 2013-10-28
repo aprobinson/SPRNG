@@ -55,12 +55,9 @@
 // Std Lib Includes
 #include <vector>
 #include <iostream>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <math.h>
+#include <algorithm>
 #include <assert.h>
+#include <string.h>
 
 // Boost Includes
 #include <boost/scoped_ptr.hpp>
@@ -98,11 +95,6 @@ const LFG::vstruct LFG::valid[] =
   { {1279,861,1,233}, {17,5,1,10}, {31,6,1,2},
     {55,24,1,11}, {63,31,1,14}, {127,97,1,21}, {521,353,1,100},
     {521,168,1,83}, {607,334,1,166}, {607,273,1,105}, {1279,418,1,208}};
-#ifdef HAVE_SPRNG_MPI
-MPI_Group LFG::mpi_lfg_group = MPI_GROUP_NULL;
-MPI_Comm LFG::mpi_lfg_group_comm = MPI_COMM_NULL;
-int LFG::mpi_lfg_group_proc_id = 0;
-#endif
 
 // Default constructor
 LFG::LFG() 
@@ -251,15 +243,16 @@ int LFG::init_rng( int gn, int tg, int s, int m )
 
   while( si_local[0] < tg && !si_local[1] ) 
     LFG::si_double(si_local,si_local,length);
-
-  // Increment the number of open streams (on process)
-  LFG::increment_number_of_streams();
-      
+ 
   d_rng_type = LFG_TYPE;
   d_gentype = p[0]->d_gentype;
-  d_si = p[0]->d_si;
-  d_r0 = p[0]->d_r0;
-  d_r1 = p[0]->d_r1;
+  
+  // A deep copy must be done on the member arrays so that the initialized
+  // LFG pointer can be freed.
+  LFG::deep_copy( p[0]->d_si, d_si, length-1 );
+  LFG::deep_copy( p[0]->d_r0, d_r0, length );
+  LFG::deep_copy( p[0]->d_r1, d_r1, length );
+  
   d_stream_number = p[0]->d_stream_number;
   d_hptr = p[0]->d_hptr;
   d_seed = p[0]->d_seed;
@@ -268,7 +261,12 @@ int LFG::init_rng( int gn, int tg, int s, int m )
   d_kval = p[0]->d_kval;
   d_param = p[0]->d_param;
 
-  delete [] p;
+  delete p[0];
+  delete[] p;
+
+  // Increment the number of open streams (on process)
+  // 2 must be added to account for -1 from delete p[0]
+  LFG::increment_number_of_streams( 2 );
 
   return 1;
 }
@@ -420,15 +418,17 @@ int LFG::spawn_rng( int nspawned, Sprng ***newgens )
 int LFG::spawn_rng( int nspawned,
 		    std::vector<boost::shared_ptr<Sprng> > &newgens )
 {
-  Sprng **temp_newgens;
+  Sprng **tmp_newgens;
 
   // Number of generators spawned
-  int val = spawn_rng( nspawned, &temp_newgens );
+  int val = spawn_rng( nspawned, &tmp_newgens );
 
   newgens.resize( val );
 
   for( int i = 0; i < val; ++i )
-    newgens[i].reset( temp_newgens[i] );
+    newgens[i].reset( tmp_newgens[i] );
+
+  delete[] tmp_newgens;
 
   return val;
 }
@@ -439,7 +439,10 @@ int LFG::get_seed_rng()
   return (GS0^LFG::global_seed);
 }
 
-// Free the memory allocated to this generator
+// Decrement the number of generator streams
+/* \details This function is called by the destructor and should therefore
+ * never be called directly
+ */
 int LFG::free_rng()
 {
   LFG::decrement_number_of_streams();
@@ -448,18 +451,24 @@ int LFG::free_rng()
 }
 
 // Pack this generator into a character buffer
+/*! \details A null character buffer should be passed to this function. The
+ * new command will be used to allocate the correct amount of memory. Just
+ * remember to call delete[] on the buffer when you are done using it.
+ */
 int LFG::pack_rng( char **buffer )
 {
-  std::string temp_buffer;
+  std::string tmp_buffer;
   
-  int val = pack_rng( temp_buffer );
+  int val = pack_rng( tmp_buffer );
   
-  temp_buffer.copy( *buffer, temp_buffer.size() );
+  *buffer = new char[tmp_buffer.size()];
+  
+  tmp_buffer.copy( *buffer, tmp_buffer.size() );
 
   return val;
 }
 
-int LFG::pack_rng( std::string &buffer )
+int LFG::pack_rng( std::string &buffer ) const
 {
   // Clear the buffer
   buffer.clear();
@@ -503,7 +512,7 @@ int LFG::pack_rng( std::string &buffer )
   store_array( d_r1, d_lval, partial_buffer );
   buffer += partial_buffer;
   
-  // Store the integer point into fill
+  // Store the integer pointer into fill
   store_value( d_hptr, partial_buffer );
   buffer += partial_buffer;
     
@@ -513,50 +522,51 @@ int LFG::pack_rng( std::string &buffer )
 // Print this generators info
 int LFG::print_rng()
 {
-  std::cout << d_gentype << std::endl << std::endl
-	    << "\tseed = " << d_init_seed 
-	    << ", stream_number = " << d_stream_number
-	    << "\tparameter = " << d_param
-	    << std::endl << std::endl;
-
+  print( std::cout );
+  
   return 1;  
+}
+
+void LFG::print( std::ostream &os ) const
+{
+  os << d_gentype << ":" << std::endl 
+     << "  seed = " << d_init_seed << "," << std::endl
+     << "  stream_number = " << d_stream_number << "," << std::endl
+     << "  parameter = " << d_param << std::endl;
 }
 
 // Unpack this generator from a character buffer
 int LFG::unpack_rng( char *packed )
 {
-  std::string tmp_packed( packed );
-  
-  return unpack_rng( tmp_packed );
-}
-
-int LFG::unpack_rng( const std::string &packed )
-{
-  int doexit=0, i, found, length, k;
+  int i, found, length, k;
   int local_seed, local_param;
-  std::size_t nbytes, offset = 0;
+  std::size_t nbytes;
   int generator_type;
   int local_lval, local_kval;
   bool valid_values = false;
+  std::string sub_string;
 
   // Load the generator type
   nbytes = sizeof( generator_type );
-  load_value( packed.substr( offset, nbytes ), generator_type );
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, generator_type );
   d_rng_type = intToGeneratorType( generator_type );
-  offset += nbytes;
+  packed += nbytes;
 
   // Load the generator description (not packed because always the same)
   d_gentype = GENTYPE;
   
   // Load the L value
   nbytes = sizeof( d_lval );
-  load_value( packed.substr( offset, nbytes ), local_lval );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, local_lval );
+  packed += nbytes;
 
   // Load the K value
   nbytes = sizeof( d_kval );
-  load_value( packed.substr( offset, nbytes ), local_kval );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, local_kval );
+  packed += nbytes;
   
   // Check that the L and K value found are valid
   for( i = 0; i < 11; ++i )
@@ -586,8 +596,9 @@ int LFG::unpack_rng( const std::string &packed )
 
   // Load the seed
   nbytes = sizeof( d_seed );
-  load_value( packed.substr( offset, nbytes), local_seed );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, local_seed );
+  packed += nbytes;
     
   // Check if this is the first stream and if the seed is valid
   if( !LFG::global_lval ) 
@@ -611,12 +622,15 @@ int LFG::unpack_rng( const std::string &packed )
 
   // Load the initial seed
   nbytes = sizeof( d_init_seed );
-  load_value( packed.substr( offset, nbytes ), d_init_seed );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_init_seed );
+  packed += nbytes;
 
   // Load the stream number
   nbytes = sizeof( d_stream_number );
-  load_value( packed.substr( offset, nbytes), d_stream_number );
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_stream_number );
+  packed += nbytes;
   
   // Resize the stored arrays
   d_si.reset( new unsigned[length - 1] );
@@ -625,28 +639,46 @@ int LFG::unpack_rng( const std::string &packed )
 
   // Load the next branch seeds
   nbytes = sizeof( unsigned )*(length-1);
-  load_array( packed.substr( offset, nbytes ), length-1, d_si );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_array( sub_string, length-1, d_si );
+  packed += nbytes;
   
   // Load the even generator
   nbytes = sizeof( unsigned )*length;
-  load_array( packed.substr( offset, nbytes ), length, d_r0 );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_array( sub_string, length, d_r0 );
+  packed += nbytes;
 
   // Load the odd generator
   nbytes = sizeof( unsigned )*length;
-  load_array( packed.substr( offset, nbytes ), length, d_r1 );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_array( sub_string, length, d_r1 );
+  packed += nbytes;
   
   // Load the integer pointer into fill
   nbytes = sizeof( d_hptr );
-  load_value( packed.substr( offset, nbytes ), d_hptr );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_hptr );
+  packed += nbytes;
   
   // Increment the number of streams
   LFG::increment_number_of_streams();
 
   return 1;
+}
+
+int LFG::unpack_rng( const std::string &packed )
+{
+  // Const cast so that the legacy unpack_rng interface can be called
+  char* packed_string = const_cast<char*>( packed.c_str() );
+
+  return unpack_rng( packed_string );
+}
+
+// Get the number of open streams
+int LFG::get_number_of_streams()
+{
+  return LFG::num_generators;
 }
 
 // Get the bit count
@@ -903,11 +935,25 @@ LFG** LFG::initialize( GeneratorType rng_type_local,
   return q;
 }
 
+// Deep copy arrays
+void LFG::deep_copy( const boost::shared_array<unsigned> &orig_array,
+		     boost::shared_array<unsigned> &copy_array,
+		     const int size )
+{
+  assert( orig_array );
+
+  // resize the copy array
+  copy_array.reset( new unsigned[size] );
+  
+  for( int i = 0; i < size; ++i )
+    copy_array[i] = orig_array[i];
+}
+
 // Increment the number of open streams
 void LFG::increment_number_of_streams( int num )
 {
   LFG::num_generators += num;
-
+  
   if( num_generators >= LFG::max_streams )
     std::cerr << "WARNING: " << LFG::num_generators << " open LFG streams. "
 	      << "Independence can only be guaranteed with " 
@@ -918,7 +964,7 @@ void LFG::increment_number_of_streams( int num )
 // Decrement the number of open streams
 void LFG::decrement_number_of_streams( int num )
 {
-  LFG::num_generators -= num;
+  LFG::num_generators -= num; 
 }
 
 } // end namespace sprng

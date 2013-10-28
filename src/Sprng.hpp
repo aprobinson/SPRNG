@@ -56,15 +56,24 @@ public:
 
   //! Pack this generator into a character buffer
   virtual int pack_rng( char **buffer ) = 0;
-  virtual int pack_rng( std::string &buffer ) = 0;
+  virtual int pack_rng( std::string &buffer ) const = 0;
 
   //! Print this generators info
   virtual int print_rng() = 0;
+  virtual void print( std::ostream &os ) const = 0;
 
   //! Unpack this generator from a character buffer
   virtual int unpack_rng( char *packed ) = 0;
   virtual int unpack_rng( const std::string &packed ) = 0;
 };
+
+//! Stream operator for printing all Sprng objects
+inline std::ostream& operator<<( std::ostream &os,
+				 const sprng::Sprng &generator )
+{ 
+  generator.print( os ); 
+  return os;
+}
 
 } // end namespace sprng
 

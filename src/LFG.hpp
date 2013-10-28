@@ -107,19 +107,23 @@ public:
   //! Return the generator seed
   int get_seed_rng();
 
-  //! Free the memory allocated to this generator
+  //! Decrement the number of generator streams 
   int free_rng();
 
   //! Pack this generator into a character buffer
   int pack_rng( char **buffer );
-  int pack_rng( std::string &buffer );
+  int pack_rng( std::string &buffer ) const;
 
   //! Print this generators info
   int print_rng();
+  void print( std::ostream &os ) const;
 
   //! Unpack this generator from a character buffer
   int unpack_rng( char *packed );
   int unpack_rng( const std::string &packed );
+
+  //! Get the number of open streams
+  static int get_number_of_streams();
   //@}
 
 private:
@@ -156,6 +160,11 @@ private:
 			   int seed_local,
 			   boost::shared_array<unsigned> &nstart_local,
 			   unsigned initseed_local );
+
+  //! Deep copy arrays
+  static void deep_copy( const boost::shared_array<unsigned> &orig_array,
+			 boost::shared_array<unsigned> &copy_array,
+			 const int size );
 
   //! Increment the number of open streams
   static void increment_number_of_streams( int num = 1 );

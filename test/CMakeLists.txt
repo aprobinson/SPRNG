@@ -58,3 +58,11 @@ ADD_EXECUTABLE(tstLCG
   ${SRC}/GeneratorType.cpp
   ${SRC}/Primes32.cpp)
 ADD_TEST(LCG_test tstLCG)
+
+ADD_EXECUTABLE(tstLCG64
+  tstLCG64.cpp
+  ${SRC}/LCG64.cpp
+  ${SRC}/GeneratorType.cpp
+  ${SRC}/Primes64.cpp)
+ADD_TEST(LCG64_test tstLCG64)
+

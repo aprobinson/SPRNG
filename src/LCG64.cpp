@@ -32,14 +32,15 @@
 namespace sprng{
 
 // Initialize static member data
-const unsigned int LCG64::parameter_list[][] =
+int LCG64::num_generators = 0;
+const unsigned int LCG64::parameter_list[][2] =
   {{0x87b0b0fdU, 0x27bb2ee6U}, 
    {0xe78b6955U, 0x2c6fe96eU},
    {0x31a53f85U, 0x369dea0fU}};
 
 // Default constructor
 LCG64::LCG64()
-: d_rng_type( LCG64 ),
+: d_rng_type( LCG64_TYPE ),
   d_gentype( GENTYPE ),
   d_stream_number( 0 ),
   d_init_seed( 0 ),
@@ -68,7 +69,7 @@ LCG64& LCG64::operator=( const LCG64 &c )
 {
   if( this != &c )
   {
-    this->free_rnd();
+    this->free_rng();
     
     d_rng_type = c.d_rng_type;
     d_gentype = c.d_gentype;
@@ -126,7 +127,7 @@ int LCG64::init_rng( int gn, int tg, int s, int m )
   }
 
   // Set the generator type
-  d_rng_type = LCG64;
+  d_rng_type = LCG64_TYPE;
 
   // Set the generator type description
   d_gentype = GENTYPE;
@@ -157,7 +158,7 @@ int LCG64::init_rng( int gn, int tg, int s, int m )
     tempdbl = get_rn_dbl();
   
   // Increment the number of LCG64 streams being used
-  LCG64::num_generators++;
+  LCG64::increment_number_of_streams();
 
   return 1;
 }
@@ -166,7 +167,7 @@ int LCG64::init_rng( int gn, int tg, int s, int m )
 int LCG64::get_rn_int()
 {
   advance_state();
-  return state>>33;
+  return d_state>>33;
 }
 
 // Return a random float in interval [0,1)
@@ -226,8 +227,8 @@ int LCG64::spawn_rng( int nspawned, Sprng ***newgens )
     
     // Initialize a stream. The spawning info will be incorrect but it will be
     // corrected below.
-    genptr[i].reset( new LCG64 );
-    genptr[i]->init_rng (gn, gn+1, s, d_parameter);
+    genptr[i] = new LCG64 ;
+    genptr[i]->init_rng( gn, gn+1, s, d_parameter );
   
     if(genptr[i] == NULL)	/* Was generator initiallized? */
     {
@@ -246,13 +247,15 @@ int LCG64::spawn_rng( int nspawned, Sprng ***newgens )
 int LCG64::spawn_rng( int nspawned, 
 		      std::vector<boost::shared_ptr<Sprng> > &newgens )
 {
-  Sprng **temp_newgens;
-  int val = spawn_rng( nspawned, &temp_newgens );
+  Sprng **tmp_newgens;
+  int val = spawn_rng( nspawned, &tmp_newgens );
 
   newgens.resize( val );
 
   for( int i = 0; i < val; ++i )
-    newgens[i].reset( temp_newgens[i] );
+    newgens[i].reset( tmp_newgens[i] );
+
+  delete[] tmp_newgens;
 
   return val;
 }
@@ -268,23 +271,26 @@ int LCG64::free_rng()
 {
   assert( this != NULL );
 
-  LCG64::num_generators--;
+  LCG64::decrement_number_of_streams();
+  
   return LCG64::num_generators;
 }
 
 // Pack this generator into a character buffer
 int LCG64::pack_rng( char **buffer )
 {
-  std::string temp_buffer;
+  std::string tmp_buffer;
 
-  int val = pack_rng( temp_buffer );
+  int val = pack_rng( tmp_buffer );
 
-  temp_buffer.copy( *buffer, temp_buffer.size() );
+  *buffer = new char[tmp_buffer.size()];
+
+  tmp_buffer.copy( *buffer, tmp_buffer.size() );
 
   return val;
 }
 
-int LCG64::pack_rng( std::string &buffer )
+int LCG64::pack_rng( std::string &buffer ) const
 {
   // Clear the buffer
   buffer.clear();
@@ -310,11 +316,11 @@ int LCG64::pack_rng( std::string &buffer )
   
   // Store the spawn offset
   store_value( d_spawn_offset, partial_buffer );
-  buffer += d_spawn_offset;
+  buffer += partial_buffer;
   
   // Store the prime
   store_value( d_prime, partial_buffer );
-  buffer += d_partial_buffer;
+  buffer += partial_buffer;
   
   // Store the state
   store_value( d_state, partial_buffer );
@@ -330,82 +336,120 @@ int LCG64::pack_rng( std::string &buffer )
 // Print this generators info
 int LCG64::print_rng()
 {
-  std::cout << d_gentype << std::endl << std::endl
-	    << "\tseed = " << d_init_seed 
-	    << ", stream_number = " << d_stream_number
-	    << "\tparameter = " << d_parameter
-	    << std::endl << std::endl;
+  print( std::cout );
 
   return 1;    
+}
+
+void LCG64::print( std::ostream &os ) const
+{
+  os << d_gentype << ":" << std::endl
+     << "  seed = " << d_init_seed << "," << std::endl
+     << "  stream_number = " << d_stream_number << "," << std::endl
+     << "  parameter = " << d_parameter << std::endl;
 }
 
 // Unpack this generator from a character buffer
 int LCG64::unpack_rng( char* packed )
 {
-  std::string tmp_packed( packed );
-  
-  return unpack_rng( tmp_packed );
-}
-
-int LCG64::unpack_rng( std::string &packed )
-{
   std::size_t nbytes, offset = 0;
   int generator_type;
+  std::string sub_string;
 
   // Load the generator type
   nbytes = sizeof( generator_type );
-  load_value( packed.substr( offset, nbytes ), generator_type );
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, generator_type );
   d_rng_type = intToGeneratorType( generator_type );
-  offset += nbytes;
+  packed += nbytes;
 
   // Load the generator description (not packed because always the same)
   d_gentype = GENTYPE;
 
   // Load the stream number
   nbytes = sizeof( d_stream_number );
-  load_value( packed.substr( offset, nbytes ), d_stream_number );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_stream_number );
+  packed += nbytes;
 
   // Load the initial seed
   nbytes = sizeof( d_init_seed );
-  load_value( packed.substr( offset, nbytes ), d_init_seed );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_init_seed );
+  packed += nbytes;
 
   // Load the parameter
   nbytes = sizeof( d_parameter );
-  load_value( packed.substr( offset, nbytes), d_parameter );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_parameter );
+  packed += nbytes;
   
   // Load the spawn offset
   nbytes = sizeof( d_spawn_offset );
-  load_value( packed.substr( offset, nbytes), d_spawn_offset );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string , d_spawn_offset );
+  packed += nbytes;
   
   // Load the prime
   nbytes = sizeof( d_prime );
-  load_value( packed.substr( offset, nbytes ), d_prime );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_prime );
+  packed += nbytes;
   
   // Load the state
   nbytes = sizeof( d_state );
-  load_value( packed.substr( offset, nbytes ), d_state );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_state );
+  packed += nbytes;
   
   // Load the multiplier
   nbytes = sizeof( d_multiplier );
-  load_value( packed.substr( offset, nbytes ), d_multiplier );
-  offset += nbytes;
+  sub_string.assign( packed, nbytes );
+  load_value( sub_string, d_multiplier );
+  packed += nbytes;
 
   // Increment the number of streams
-  LCG64::num_generators++;
+  LCG64::increment_number_of_streams();
 
   return 1;
+}
+
+int LCG64::unpack_rng( const std::string &packed )
+{
+  char* packed_string = const_cast<char*>( packed.c_str() );
+
+  return unpack_rng( packed_string );
+}
+
+// Get the number of open streams
+int LCG64::get_number_of_streams()
+{
+  return LCG64::num_generators;
 }
 
 // Advance the seed state
 void LCG64::advance_state()
 {
   d_state = d_state*d_multiplier + d_prime;
+}
+
+// Increment the number of open streams
+void LCG64::increment_number_of_streams( int num )
+{
+  LCG64::num_generators += num;
+  
+  if( LCG64::num_generators >= LCG64::max_streams )
+    std::cerr << "WARNING: " << LCG64::num_generators 
+	      << " open LCG64 streams. "
+	      << "Independence can only be guaranteed with " 
+	      << LCG64::max_streams << " LCG64 streams."
+	      << std::endl;
+}
+
+// Decrement the number of open streams
+void LCG64::decrement_number_of_streams( int num )
+{
+  LCG64::num_generators -= num;
 }
 
 } // end namespace sprng

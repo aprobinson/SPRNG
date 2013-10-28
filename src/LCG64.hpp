@@ -22,7 +22,7 @@
 #include "Sprng.hpp"
 #include "GeneratorType.hpp"
 
-namespace SPRGN{
+namespace sprng{
 
 //! A 64bit linear congruential pseudo-random number generator
 class LCG64 : public Sprng
@@ -69,14 +69,18 @@ public:
 
   //! Pack this generator into a character buffer
   int pack_rng( char **buffer );
-  int pack_rng( std::string &buffer );
+  int pack_rng( std::string &buffer ) const;
 
   //! Print this generators info
   int print_rng();
+  void print( std::ostream &os ) const;
 
   //! Unpack this generator from a character buffer
   int unpack_rng( char *packed );
-  int unpack_rng( std::string &packed );
+  int unpack_rng( const std::string &packed );
+
+  //! Get the number of open streams
+  static int get_number_of_streams();
   //@}
 
 private:
@@ -84,11 +88,17 @@ private:
   //! Advance the seed state
   inline void advance_state();
 
+  //! Increment the number of open streams
+  static void increment_number_of_streams( int num = 1 );
+
+  //! Decrement the number of open streams
+  static void decrement_number_of_streams( int num = 1 );
+
   //! Max number of LCG64 streams possible
   static const int max_streams = 146138719;
 
   //! Number of streams currently open
-  static int num_generators = 0;
+  static int num_generators;
 
   //! Available mutlipliers
   static const unsigned int parameter_list[3][2];

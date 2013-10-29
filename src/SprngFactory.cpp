@@ -11,9 +11,9 @@
 #include "LFG.hpp"
 #include "LCG.hpp"
 #include "LCG64.hpp"
-#include "CMRG.hpp"
-#include "MLFG.hpp"
-#include "PMLCG.hpp"
+// #include "CMRG.hpp"
+// #include "MLFG.hpp"
+// #include "PMLCG.hpp"
 
 namespace sprng{
 
@@ -30,9 +30,9 @@ SprngFactory::SprngPtr SprngFactory::create() const
   case LFG_TYPE: return new LFG;
   case LCG_TYPE: return new LCG;
   case LCG64_TYPE: return new LCG64;
-  case CMRG_TYPE: return new CMRG;
-  case MLFG_TYPE: return new MLFG;
-  case PMLCG_TYPE: return new PMLCG;
+  // case CMRG_TYPE: return new CMRG;
+  // case MLFG_TYPE: return new MLFG;
+  // case PMLCG_TYPE: return new PMLCG;
   }
 }
 

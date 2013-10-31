@@ -21,8 +21,6 @@
 #include "SeedHelpers.hpp"
 #include "MPIHelpers.hpp"
 
-using namespace std;
-
 namespace sprng{
 
 // Generator initialization

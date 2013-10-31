@@ -27,7 +27,7 @@ int Primes64::init_prime_64()
   
   for(i=3; i < Primes64::min_prime; i += 2)
   {
-    isprime = true;;
+    isprime = true;
     
     for(j=0; j < obtained; j++)
       if(i%primes[j] == 0)
@@ -147,6 +147,12 @@ int Primes64::getprime_64( unsigned int &prime, int offset )
   prime = tmp_vec[0];
 
   return return_val;
+}
+
+// Reset the primes list
+void Primes64::reset()
+{
+  Primes64::prime_list_initialized = false;
 }
 
 // Initialize the static boolean

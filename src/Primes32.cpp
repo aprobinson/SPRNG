@@ -148,6 +148,12 @@ int Primes32::getprime_32( int &prime, int offset )
   return return_val;
 }
 
+// Reset the primes list
+void Primes32::reset()
+{
+  Primes32::prime_list_initialized = false;
+}
+
 // Initialize the static boolean
 bool Primes32::prime_list_initialized = false;
 

@@ -1,5 +1,7 @@
 SET(SRC ${CMAKE_SOURCE_DIR}/src)
 
+FIND_PACKAGE(Boost REQUIRED)
+
 ADD_EXECUTABLE(tstStore	
   tstStore.cpp)
 ADD_TEST(Store_test tstStore)

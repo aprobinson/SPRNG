@@ -33,6 +33,9 @@ public:
 
   //! Get a single prime
   static int getprime_32( int &prime, int offset );
+  
+  //! Reset the primes list
+  static void reset();
 
   // sqrt(2)*2^23 + 2
   static const int max_prime = 11863285; 
@@ -48,7 +51,7 @@ private:
   // Full prime array
   static const int full_prime_list_size = 1778;
   static const int prime_list_32[1778];
-  
+
   // Has the primes array been initialized?
   static bool prime_list_initialized;
 

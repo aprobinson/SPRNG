@@ -34,6 +34,9 @@ public:
   //! Get a single prime
   static int getprime_64( unsigned int &prime, int offset );
 
+  //! Reset the prime list
+  static void reset();
+
 private:
 
   // Largest odd # < sqrt(2)*2^31+2 
@@ -46,7 +49,7 @@ private:
   // Full prime array
   static const int full_prime_list_size = 15613;
   static const unsigned int prime_list_64[15613];
-  
+
   // Has the primes array been initialized?
   static bool prime_list_initialized;
 
